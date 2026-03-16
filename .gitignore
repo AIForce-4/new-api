@@ -30,3 +30,6 @@ data/
 .gomodcache/
 .gocache-temp
 .gopath
+
+token_estimator_test.go
+skills-lock.json
