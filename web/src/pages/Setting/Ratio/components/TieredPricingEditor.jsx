@@ -770,7 +770,7 @@ const PRESET_GROUPS = [
     presets: [
       { key: 'flat', label: 'Flat', expr: 'tier("base", p * 2 + c * 4)' },
       { key: 'claude-opus', label: 'Claude Opus 4.6', expr: 'tier("base", p * 5 + c * 25 + cr * 0.5 + cc * 6.25 + cc1h * 10)' },
-      { key: 'gpt-5.4', label: 'GPT-5.4', expr: 'tier("base", p * 2.5 + c * 15 + cr * 0.25)' },
+      { key: 'gpt-5.4', label: 'GPT-5.4', expr: 'p <= 272000 ? tier("standard", p * 2.5 + c * 15 + cr * 0.25) : tier("long_context", p * 5 + c * 22.5 + cr * 0.5)' },
     ],
   },
   {
@@ -785,8 +785,10 @@ const PRESET_GROUPS = [
   {
     group: '多模态',
     presets: [
-      { key: 'gpt-image-1-mini', label: 'GPT-Image-1-Mini', expr: 'tier("base", p * 2 + c * 8 + img * 2.5)' },
-      { key: 'qwen3-omni-flash', label: 'Qwen3-Omni-Flash', expr: 'tier("base", p * 0.43 + c * 3.06 + img * 0.78 + ai * 3.81 + ao * 15.11)' },
+      { key: 'gpt-image-1-mini', label: 'GPT Image 1 Mini', expr: 'tier("base", p * 2 + c * 8 + img * 2.5)' },
+      { key: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', expr: 'tier("base", p * 0.3 + c * 2.5 + cr * 0.03 + ai * 1.0)' },
+      { key: 'gemini-3-pro-image', label: 'Gemini 3 Pro Image', expr: 'tier("base", p * 2 + c * 12 + img_o * 120)' },
+      { key: 'qwen3-omni-flash', label: 'Qwen3 Omni Flash', expr: 'tier("base", p * 0.43 + c * 3.06 + img * 0.78 + ai * 3.81 + ao * 15.11)' },
     ],
   },
   {
@@ -798,9 +800,12 @@ const PRESET_GROUPS = [
         requestRules: [{ conditions: [{ source: SOURCE_HEADER, path: 'anthropic-beta', mode: MATCH_CONTAINS, value: 'fast-mode-2026-02-01' }], multiplier: '6' }],
       },
       {
-        key: 'gpt-5.4-fast', label: 'GPT-5.4 Fast',
-        expr: 'tier("base", p * 2.5 + c * 15 + cr * 0.25)',
-        requestRules: [{ conditions: [{ source: SOURCE_PARAM, path: 'service_tier', mode: MATCH_EQ, value: 'fast' }], multiplier: '2' }],
+        key: 'gpt-5.4-tiers', label: 'GPT-5.4 Priority/Flex',
+        expr: 'p <= 272000 ? tier("standard", p * 2.5 + c * 15 + cr * 0.25) : tier("long_context", p * 5 + c * 22.5 + cr * 0.5)',
+        requestRules: [
+          { conditions: [{ source: SOURCE_PARAM, path: 'service_tier', mode: MATCH_EQ, value: 'priority' }], multiplier: '2' },
+          { conditions: [{ source: SOURCE_PARAM, path: 'service_tier', mode: MATCH_EQ, value: 'flex' }], multiplier: '0.5' },
+        ],
       },
     ],
   },
