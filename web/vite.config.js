@@ -1,11 +1,19 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, transformWithEsbuild } from 'vite';
-import pkg from '@douyinfe/vite-plugin-semi';
 import path from 'path';
+import fs from 'fs';
 import { codeInspectorPlugin } from 'code-inspector-plugin';
-const { vitePluginSemi } = pkg;
+import { vitePluginSemiFixed } from './vite/semiPluginFixed.js';
 
 const trimTrailingSlash = (value) => value.replace(/\/+$/, '');
+const resolvePackageAlias = (packageName) => {
+  const candidates = [
+    path.resolve(__dirname, 'node_modules', packageName),
+    path.resolve(__dirname, 'node_modules/.pnpm/node_modules', packageName),
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate));
+};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -21,6 +29,23 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        ...(resolvePackageAlias('@douyinfe/semi-illustrations')
+          ? {
+              '@douyinfe/semi-illustrations': resolvePackageAlias(
+                '@douyinfe/semi-illustrations',
+              ),
+            }
+          : {}),
+        ...(resolvePackageAlias('highlight.js')
+          ? {
+              'highlight.js': resolvePackageAlias('highlight.js'),
+            }
+          : {}),
+        ...(resolvePackageAlias('prop-types')
+          ? {
+              'prop-types': resolvePackageAlias('prop-types'),
+            }
+          : {}),
       },
     },
     plugins: [
@@ -43,7 +68,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       react(),
-      vitePluginSemi({
+      vitePluginSemiFixed({
         cssLayer: true,
       }),
     ],
