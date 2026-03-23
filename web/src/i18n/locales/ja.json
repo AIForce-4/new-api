@@ -3253,6 +3253,13 @@
     "输入价格：{{symbol}}{{price}} / 1M tokens": "入力価格：{{symbol}}{{price}} / 1M tokens",
     "输出价格 {{symbol}}{{price}} / 1M tokens": "補完料金 {{symbol}}{{price}} / 1M tokens",
     "输出价格：{{symbol}}{{price}} / 1M tokens": "補完料金：{{symbol}}{{price}} / 1M tokens",
-    "输出价格：{{symbol}}{{total}} / 1M tokens": "補完料金：{{symbol}}{{total}} / 1M tokens"
+    "输出价格：{{symbol}}{{total}} / 1M tokens": "補完料金：{{symbol}}{{total}} / 1M tokens",
+    "加载首页内容失败...": "ホームページ内容の読み込みに失敗しました...",
+    "管理更简单": "管理がより簡単",
+    "性能更优": "性能がより高い",
+    "门槛更低": "導入ハードルが低い",
+    "选择 MAX": "MAXを選択",
+    "选择 PRO": "PROを選択",
+    "选择 ULTRA": "ULTRAを選択"
   }
 }

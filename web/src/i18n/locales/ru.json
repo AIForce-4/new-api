@@ -3286,6 +3286,13 @@
     "输入价格：{{symbol}}{{price}} / 1M tokens": "Цена ввода: {{symbol}}{{price}} / 1M tokens",
     "输出价格 {{symbol}}{{price}} / 1M tokens": "Цена вывода {{symbol}}{{price}} / 1M tokens",
     "输出价格：{{symbol}}{{price}} / 1M tokens": "Цена вывода: {{symbol}}{{price}} / 1M tokens",
-    "输出价格：{{symbol}}{{total}} / 1M tokens": "Цена вывода: {{symbol}}{{total}} / 1M tokens"
+    "输出价格：{{symbol}}{{total}} / 1M tokens": "Цена вывода: {{symbol}}{{total}} / 1M tokens",
+    "加载首页内容失败...": "Не удалось загрузить содержимое главной страницы...",
+    "管理更简单": "Управление проще",
+    "性能更优": "Производительность выше",
+    "门槛更低": "Ниже порог входа",
+    "选择 MAX": "Выбрать MAX",
+    "选择 PRO": "Выбрать PRO",
+    "选择 ULTRA": "Выбрать ULTRA"
   }
 }

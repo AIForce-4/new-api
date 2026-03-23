@@ -2937,6 +2937,13 @@
     "输入价格：{{symbol}}{{price}} / 1M tokens": "輸入價格：{{symbol}}{{price}} / 1M tokens",
     "输出价格 {{symbol}}{{price}} / 1M tokens": "輸出價格 {{symbol}}{{price}} / 1M tokens",
     "输出价格：{{symbol}}{{price}} / 1M tokens": "輸出價格：{{symbol}}{{price}} / 1M tokens",
-    "输出价格：{{symbol}}{{total}} / 1M tokens": "輸出價格：{{symbol}}{{total}} / 1M tokens"
+    "输出价格：{{symbol}}{{total}} / 1M tokens": "輸出價格：{{symbol}}{{total}} / 1M tokens",
+    "加载首页内容失败...": "載入首頁內容失敗...",
+    "管理更简单": "管理更簡單",
+    "性能更优": "性能更優",
+    "门槛更低": "門檻更低",
+    "选择 MAX": "選擇 MAX",
+    "选择 PRO": "選擇 PRO",
+    "选择 ULTRA": "選擇 ULTRA"
   }
 }

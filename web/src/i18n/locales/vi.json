@@ -3823,6 +3823,13 @@
     "补全倍率 {{completionRatio}}": "Tỷ lệ hoàn thành {{completionRatio}}",
     "输出价格 {{symbol}}{{price}} / 1M tokens": "Giá đầu ra {{symbol}}{{price}} / 1M tokens",
     "输出价格：{{symbol}}{{price}} / 1M tokens": "Giá đầu ra: {{symbol}}{{price}} / 1M tokens",
-    "输出价格：{{symbol}}{{total}} / 1M tokens": "Giá đầu ra: {{symbol}}{{total}} / 1M tokens"
+    "输出价格：{{symbol}}{{total}} / 1M tokens": "Giá đầu ra: {{symbol}}{{total}} / 1M tokens",
+    "加载首页内容失败...": "Tải nội dung trang chủ thất bại...",
+    "管理更简单": "Quản lý đơn giản hơn",
+    "性能更优": "Hiệu năng tốt hơn",
+    "门槛更低": "Rào cản thấp hơn",
+    "选择 MAX": "Chọn MAX",
+    "选择 PRO": "Chọn PRO",
+    "选择 ULTRA": "Chọn ULTRA"
   }
 }

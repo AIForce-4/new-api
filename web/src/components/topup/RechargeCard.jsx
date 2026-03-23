@@ -1,22 +1,3 @@
-/*
-Copyright (C) 2025 QuantumNous
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-For commercial licensing, please contact support@quantumnous.com
-*/
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Avatar,
@@ -121,16 +102,14 @@ const RechargeCard = ({
       <Card
         className='!rounded-xl w-full'
         cover={
-          <div
-            className='relative h-30'
-            style={{
-              '--palette-primary-darkerChannel': '37 99 235',
-              backgroundImage: `linear-gradient(0deg, rgba(var(--palette-primary-darkerChannel) / 80%), rgba(var(--palette-primary-darkerChannel) / 80%)), url('/cover-4.webp')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            }}
-          >
+            <div
+              className='relative h-30'
+              style={{
+                backgroundColor: '#B69973',
+                background:
+                  'linear-gradient(135deg, #9e7f5b 0%, #B69973 58%, #c9b190 100%)',
+              }}
+            >
             <div className='relative z-10 h-full flex flex-col justify-between p-4'>
               <div className='flex justify-between items-center'>
                 <Text strong style={{ color: 'white', fontSize: '16px' }}>
@@ -235,16 +214,17 @@ const RechargeCard = ({
                   <Col xs={24} sm={24} md={24} lg={10} xl={10}>
                     <Form.InputNumber
                       field='topUpCount'
-                      label={t('充值数量')}
+                      label={t('充值金额(单位：美元)')}
                       disabled={!enableOnlineTopUp && !enableStripeTopUp}
                       placeholder={
-                        t('充值数量，最低 ') + renderQuotaWithAmount(minTopUp)
+                        t('充值进入，最低 ') + renderQuotaWithAmount(minTopUp)
                       }
                       value={topUpCount}
                       min={minTopUp}
                       max={999999999}
                       step={1}
                       precision={0}
+                      suffix={'$'}
                       onChange={async (value) => {
                         if (value && value >= 1) {
                           setTopUpCount(value);

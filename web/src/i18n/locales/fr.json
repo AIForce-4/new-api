@@ -3272,6 +3272,13 @@
     "输入价格：{{symbol}}{{price}} / 1M tokens": "Prix d'entrée : {{symbol}}{{price}} / 1M tokens",
     "输出价格 {{symbol}}{{price}} / 1M tokens": "Prix de sortie {{symbol}}{{price}} / 1M tokens",
     "输出价格：{{symbol}}{{price}} / 1M tokens": "Prix de sortie : {{symbol}}{{price}} / 1M tokens",
-    "输出价格：{{symbol}}{{total}} / 1M tokens": "Prix de sortie : {{symbol}}{{total}} / 1M tokens"
+    "输出价格：{{symbol}}{{total}} / 1M tokens": "Prix de sortie : {{symbol}}{{total}} / 1M tokens",
+    "加载首页内容失败...": "Échec du chargement du contenu de la page d'accueil...",
+    "管理更简单": "Gestion plus simple",
+    "性能更优": "Meilleures performances",
+    "门槛更低": "Seuil plus bas",
+    "选择 MAX": "Choisir MAX",
+    "选择 PRO": "Choisir PRO",
+    "选择 ULTRA": "Choisir ULTRA"
   }
 }
