@@ -43,8 +43,11 @@ export default defineConfig(({ mode }) => {
       },
       react(),
     ],
+    // 【关键修改 1】优化依赖配置
     optimizeDeps: {
       force: true,
+      // 将 lottie-web 排除在预构建之外，防止 Vite 尝试分析它导致死锁
+      exclude: ['lottie-web'], 
       esbuildOptions: {
         loader: {
           '.js': 'jsx',
@@ -53,7 +56,19 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      // 【关键修改 2】关闭 Sourcemap 以大幅减少内存占用（生产环境建议关闭，调试时可开启）
+      sourcemap: false,
+      // 【关键修改 3】限制构建 worker 数量，防止并发过高撑爆内存
+      worker: {
+        maxWorkers: 1, 
+      },
       rollupOptions: {
+        // 【关键修改 4】忽略 lottie-web 的 eval 警告，防止构建器过度处理
+        onwarn(warning, warn) {
+          if (warning.code === 'EVAL') return;
+          if (warning.message.includes('lottie-web')) return;
+          warn(warning);
+        },
         output: {
           manualChunks: {
             'react-core': ['react', 'react-dom', 'react-router-dom'],
@@ -71,6 +86,8 @@ export default defineConfig(({ mode }) => {
               'react-i18next',
               'i18next-browser-languagedetector',
             ],
+            // 【关键修改 5】将 lottie-web 单独拆分到一个 chunk，避免与其他代码混合混淆
+            'lottie-player': ['lottie-web'],
           },
         },
       },
