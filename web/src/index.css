@@ -4304,6 +4304,20 @@ body.route-marketing {
   --marketing-accent-soft: rgba(216, 119, 87, 0.12);
   --marketing-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   --marketing-shadow-strong: 0 20px 40px rgba(15, 23, 42, 0.14);
+  --marketing-primary-action-bg: var(--marketing-accent);
+  --marketing-primary-action-hover: var(--marketing-accent-dark);
+  --marketing-neutral-action-bg: var(--marketing-ink);
+  --marketing-neutral-action-hover: color-mix(
+    in srgb,
+    var(--marketing-ink) 90%,
+    white
+  );
+  --marketing-pro-card-bg: rgb(236, 232, 225);
+  --marketing-pro-card-border: rgb(222, 204, 193);
+  --marketing-enterprise-card-bg: rgba(239, 246, 255, 0.5);
+  --marketing-enterprise-card-border: rgba(191, 219, 254, 1);
+  --marketing-enterprise-accent: #2563eb;
+  --marketing-enterprise-accent-soft: rgba(37, 99, 235, 0.08);
   --marketing-gutter: clamp(16px, 2vw, 24px);
   background: var(--marketing-bg);
   color: var(--marketing-ink);
@@ -4366,6 +4380,24 @@ html.dark body.route-marketing {
   --marketing-accent-soft: rgba(224, 131, 98, 0.16);
   --marketing-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
   --marketing-shadow-strong: 0 24px 48px rgba(0, 0, 0, 0.36);
+  --marketing-primary-action-bg: var(--marketing-accent);
+  --marketing-primary-action-hover: var(--marketing-accent-dark);
+  --marketing-neutral-action-bg: #2d2d2d;
+  --marketing-neutral-action-hover: #3a3a3a;
+  --marketing-pro-card-bg: linear-gradient(
+    180deg,
+    rgba(110, 70, 53, 0.3) 0%,
+    rgba(39, 31, 28, 0.96) 100%
+  );
+  --marketing-pro-card-border: rgba(224, 131, 98, 0.34);
+  --marketing-enterprise-card-bg: linear-gradient(
+    180deg,
+    rgba(59, 130, 246, 0.16) 0%,
+    rgba(20, 29, 44, 0.94) 100%
+  );
+  --marketing-enterprise-card-border: rgba(96, 165, 250, 0.34);
+  --marketing-enterprise-accent: #8ec5ff;
+  --marketing-enterprise-accent-soft: rgba(96, 165, 250, 0.14);
   background: var(--marketing-bg);
 }
 
@@ -4593,12 +4625,12 @@ body.route-marketing pre {
 }
 
 .marketing-header-auth--solid {
-  background: var(--marketing-ink);
+  background: var(--marketing-primary-action-bg);
   color: white;
 }
 
 .marketing-header-auth--solid:hover {
-  background: color-mix(in srgb, var(--marketing-ink) 90%, white);
+  background: var(--marketing-primary-action-hover);
 }
 
 .marketing-home {
@@ -5148,12 +5180,12 @@ html.dark .marketing-orbit-visual__core-badge {
 }
 
 .marketing-about__button--primary {
-  background: var(--marketing-ink);
+  background: var(--marketing-primary-action-bg);
   color: white;
 }
 
 .marketing-about__button--primary:hover {
-  background: color-mix(in srgb, var(--marketing-ink) 90%, white);
+  background: var(--marketing-primary-action-hover);
 }
 
 .marketing-about__button--secondary {
@@ -5722,7 +5754,7 @@ html.dark .marketing-platform-action {
 
 .marketing-pricing-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 28px;
 }
 
@@ -5737,9 +5769,18 @@ html.dark .marketing-platform-action {
   background: color-mix(in srgb, var(--marketing-card) 96%, transparent);
 }
 
+.marketing-pricing-card--lite {
+  border-color: color-mix(
+    in srgb,
+    var(--marketing-accent) 18%,
+    var(--marketing-border)
+  );
+  background: color-mix(in srgb, var(--marketing-accent-soft) 42%, var(--marketing-card));
+}
+
 .marketing-pricing-card--pro {
-  border: 2px solid rgb(222, 204, 193);
-  background: rgb(236, 232, 225);
+  border: 2px solid var(--marketing-pro-card-border);
+  background: var(--marketing-pro-card-bg);
 }
 
 .marketing-pricing-card--max {
@@ -5873,12 +5914,21 @@ html.dark .marketing-platform-action {
 }
 
 .marketing-pricing-card__button--default {
-  background: var(--marketing-ink);
+  background: var(--marketing-neutral-action-bg);
 }
 
 .marketing-pricing-card__button--outline {
-  border: 2px solid rgb(222, 204, 193);
+  border: 2px solid var(--marketing-pro-card-border);
+  background: color-mix(in srgb, var(--marketing-card) 78%, transparent);
   color: var(--marketing-ink);
+}
+
+.marketing-pricing-card__button--default:hover {
+  background: var(--marketing-neutral-action-hover);
+}
+
+.marketing-pricing-card__button--outline:hover {
+  background: color-mix(in srgb, var(--marketing-accent) 12%, var(--marketing-card));
 }
 
 .marketing-pricing-card__button--accent {
@@ -6097,7 +6147,7 @@ body.route-home .app-footer-shell::before {
 
 .pricing-marketing-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
   max-width: 1200px;
   margin: 0 auto;
@@ -6115,14 +6165,23 @@ body.route-home .app-footer-shell::before {
   padding: 32px;
   border: 1px solid var(--marketing-border);
   border-radius: 12px;
-  background: rgb(237, 236, 230);
+  background: color-mix(in srgb, var(--marketing-card) 96%, transparent);
   overflow: hidden;
+}
+
+.pricing-marketing-card--lite {
+  border-color: color-mix(
+    in srgb,
+    var(--marketing-accent) 18%,
+    var(--marketing-border)
+  );
+  background: color-mix(in srgb, var(--marketing-accent-soft) 42%, var(--marketing-card));
 }
 
 .pricing-marketing-card--pro {
   border-width: 2px;
-  border-color: rgba(154, 52, 18, 0.15);
-  background: rgba(154, 52, 18, 0.01);
+  border-color: var(--marketing-pro-card-border);
+  background: var(--marketing-pro-card-bg);
 }
 
 .pricing-marketing-card--max {
@@ -6146,8 +6205,8 @@ body.route-home .app-footer-shell::before {
 }
 
 .pricing-marketing-card--enterprise {
-  border-color: rgba(191, 219, 254, 1);
-  background: rgba(239, 246, 255, 0.5);
+  border-color: var(--marketing-enterprise-card-border);
+  background: var(--marketing-enterprise-card-bg);
 }
 
 .pricing-marketing-card__ribbon {
@@ -6196,7 +6255,7 @@ body.route-home .app-footer-shell::before {
 }
 
 .pricing-marketing-card__title--blue {
-  color: #2563eb;
+  color: var(--marketing-enterprise-accent);
 }
 
 .pricing-marketing-card__price-wrap {
@@ -6218,7 +6277,7 @@ body.route-home .app-footer-shell::before {
 }
 
 .pricing-marketing-card__price--blue {
-  color: #2563eb;
+  color: var(--marketing-enterprise-accent);
 }
 
 .pricing-marketing-card__price-suffix {
@@ -6301,7 +6360,7 @@ body.route-home .app-footer-shell::before {
 }
 
 .pricing-marketing-feature__icon--blue {
-  color: #3b82f6;
+  color: var(--marketing-enterprise-accent);
 }
 
 .pricing-marketing-feature__highlight {
@@ -6329,7 +6388,7 @@ body.route-home .app-footer-shell::before {
 }
 
 .pricing-marketing-feature__highlight--blue {
-  color: #2563eb;
+  color: var(--marketing-enterprise-accent);
 }
 
 .pricing-marketing-button {
@@ -6345,23 +6404,23 @@ body.route-home .app-footer-shell::before {
 }
 
 .pricing-marketing-button--default {
-  background: var(--marketing-ink);
+  background: var(--marketing-neutral-action-bg);
   color: white;
 }
 
 .pricing-marketing-button--default:hover {
-  background: color-mix(in srgb, var(--marketing-ink) 90%, white);
+  background: var(--marketing-neutral-action-hover);
 }
 
 .pricing-marketing-button--outline {
   border-width: 2px;
-  border-color: rgba(154, 52, 18, 0.15);
+  border-color: var(--marketing-pro-card-border);
   color: var(--marketing-ink);
-  background: transparent;
+  background: color-mix(in srgb, var(--marketing-card) 78%, transparent);
 }
 
 .pricing-marketing-button--outline:hover {
-  background: rgba(251, 146, 60, 0.12);
+  background: color-mix(in srgb, var(--marketing-accent) 12%, var(--marketing-card));
 }
 
 .pricing-marketing-button--accent {
@@ -6384,13 +6443,17 @@ body.route-home .app-footer-shell::before {
 
 .pricing-marketing-button--blue-outline {
   border-width: 2px;
-  border-color: rgba(59, 130, 246, 0.5);
-  color: #2563eb;
-  background: transparent;
+  border-color: var(--marketing-enterprise-card-border);
+  color: var(--marketing-enterprise-accent);
+  background: var(--marketing-enterprise-accent-soft);
 }
 
 .pricing-marketing-button--blue-outline:hover {
-  background: rgba(239, 246, 255, 0.8);
+  background: color-mix(
+    in srgb,
+    var(--marketing-enterprise-accent) 14%,
+    var(--marketing-card)
+  );
 }
 
 .pricing-marketing-support {

@@ -371,7 +371,7 @@ export function getChannelIcon(channelType) {
     case 35: // MiniMax
       return <Minimax.Color size={iconSize} />;
     case 37: // Dify
-      return <Dify.Color size={iconSize} />;
+      return <Dify size={iconSize} />;
     case 38: // Jina
       return <Jina size={iconSize} />;
     case 40: // SiliconCloud
@@ -394,7 +394,7 @@ export function getChannelIcon(channelType) {
       return <Replicate size={iconSize} />;
     case 8: // 自定义渠道
     case 22: // 知识库：FastGPT
-      return <FastGPT.Color size={iconSize} />;
+      return <FastGPT size={iconSize} />;
     case 21: // 知识库：AI Proxy
     case 44: // 嵌入模型：MokaAI M3E
     default:

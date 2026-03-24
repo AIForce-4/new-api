@@ -3,6 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 import { UserContext } from '../../context/User';
+import {
+  SUBSCRIPTION_PLAN_DEFINITIONS,
+  formatPricingAmount,
+  getSubscriptionPlanDiscountLabel,
+  getSubscriptionPlanQuota,
+} from '../../constants';
 
 const PlanFeature = ({ tone, children }) => (
   <div className='pricing-marketing-feature'>
@@ -22,6 +28,18 @@ const MarketingPricingPage = () => {
   const [userState] = useContext(UserContext);
   const navigate = useNavigate();
   const [contactOpen, setContactOpen] = useState(false);
+  const subscriptionPlans = SUBSCRIPTION_PLAN_DEFINITIONS.map((plan) => {
+    const quota = getSubscriptionPlanQuota(plan.price, plan.discount);
+    const savings = quota - plan.price;
+    const discountLabel = getSubscriptionPlanDiscountLabel(plan.discount);
+
+    return {
+      ...plan,
+      quota,
+      savings,
+      discountLabel,
+    };
+  });
 
   const goToTopUp = (plan) => {
     if (!userState?.user) {
@@ -42,156 +60,106 @@ const MarketingPricingPage = () => {
             </div>
 
             <div className='pricing-marketing-grid'>
-              <article className='pricing-marketing-card pricing-marketing-card--pro'>
-                <div className='pricing-marketing-card__header'>
-                  <h2 className='pricing-marketing-card__title'>PRO</h2>
-                  <div className='pricing-marketing-card__price-wrap'>
-                    <div className='pricing-marketing-card__price'>¥259</div>
-                    <div className='pricing-marketing-card__meta'>
-                      <p className='pricing-marketing-card__original'>
-                        {t('原价')} ¥358
-                      </p>
-                      <p className='pricing-marketing-card__saving'>
-                        {t('优惠')}8.5折 · {t('省')}¥99
-                      </p>
+              {subscriptionPlans.map((plan) => {
+                const titleClassName = [
+                  'pricing-marketing-card__title',
+                  plan.key === 'MAX' && 'pricing-marketing-card__title--max',
+                  plan.key === 'ULTRA' && 'pricing-marketing-card__title--ultra',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+                const savingClassName = [
+                  'pricing-marketing-card__saving',
+                  plan.key === 'MAX' && 'pricing-marketing-card__saving--max',
+                  plan.key === 'ULTRA' &&
+                    'pricing-marketing-card__saving--ultra',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+                const featureAccentClassName = [
+                  'pricing-marketing-feature__highlight',
+                  plan.key === 'MAX' &&
+                    'pricing-marketing-feature__highlight--max',
+                  plan.key === 'ULTRA' &&
+                    'pricing-marketing-feature__highlight--ultra',
+                  !['MAX', 'ULTRA'].includes(plan.key) &&
+                    'pricing-marketing-feature__highlight--accent',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+                const featureToneClassName =
+                  plan.key === 'ULTRA'
+                    ? 'pricing-marketing-feature__icon--orange'
+                    : 'pricing-marketing-feature__icon--accent';
+
+                return (
+                  <article
+                    key={plan.key}
+                    className={`pricing-marketing-card ${plan.pricingToneClassName}`}
+                  >
+                    {plan.badgeKey ? (
+                      <div
+                        className={`pricing-marketing-card__ribbon ${plan.key === 'ULTRA' ? 'pricing-marketing-card__ribbon--orange' : 'pricing-marketing-card__ribbon--accent'}`}
+                      >
+                        {t(plan.badgeKey)}
+                      </div>
+                    ) : null}
+                    <div className='pricing-marketing-card__header'>
+                      <h2 className={titleClassName}>{plan.key}</h2>
+                      <div className='pricing-marketing-card__price-wrap'>
+                        <div className='pricing-marketing-card__price'>
+                          {formatPricingAmount(plan.price)}
+                        </div>
+                        <div className='pricing-marketing-card__meta'>
+                          <p className='pricing-marketing-card__original'>
+                            {t('原价')} {formatPricingAmount(plan.quota)}
+                          </p>
+                          <p className={savingClassName}>
+                            {t('优惠')}
+                            {t(getSubscriptionPlanDiscountLabel(plan.discount))} ·{' '}
+                            {t('省')}
+                            {formatPricingAmount(plan.savings)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className='pricing-marketing-card__features'>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('立即获得')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--accent'>
-                      ￥305.00
-                    </span>
-                    {t('额度')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('折合')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--accent'>
-                      8.5折
-                    </span>
-                    {t('优惠')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('额度有效期30天')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('基本速率支持')}
-                  </PlanFeature>
-                </div>
-
-                <PlanButton
-                  className='pricing-marketing-button--outline'
-                  onClick={() => goToTopUp('PRO')}
-                >
-                  {t('选择 PRO')}
-                </PlanButton>
-              </article>
-
-              <article className='pricing-marketing-card pricing-marketing-card--max'>
-                <div className='pricing-marketing-card__ribbon pricing-marketing-card__ribbon--accent'>
-                  {t('推荐')}
-                </div>
-                <div className='pricing-marketing-card__header'>
-                  <h2 className='pricing-marketing-card__title pricing-marketing-card__title--max'>
-                    MAX
-                  </h2>
-                  <div className='pricing-marketing-card__price-wrap'>
-                    <div className='pricing-marketing-card__price'>¥559</div>
-                    <div className='pricing-marketing-card__meta'>
-                      <p className='pricing-marketing-card__original'>
-                        {t('原价')} ¥699
-                      </p>
-                      <p className='pricing-marketing-card__saving pricing-marketing-card__saving--max'>
-                        {t('优惠')}8折 · {t('省')}¥140
-                      </p>
+                    <div className='pricing-marketing-card__features'>
+                      <PlanFeature tone={featureToneClassName}>
+                        {t('立即获得')}
+                        <span className={featureAccentClassName}>
+                          {formatPricingAmount(plan.quota, {
+                            symbol: '￥',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                        {t('额度')}
+                      </PlanFeature>
+                      <PlanFeature tone={featureToneClassName}>
+                        {t('折合')}
+                        <span className={featureAccentClassName}>
+                          {t(plan.discountLabel)}
+                        </span>
+                        {t('优惠')}
+                      </PlanFeature>
+                      <PlanFeature tone={featureToneClassName}>
+                        {t('额度有效期30天')}
+                      </PlanFeature>
+                      <PlanFeature tone={featureToneClassName}>
+                        {t(plan.supportTextKey)}
+                      </PlanFeature>
                     </div>
-                  </div>
-                </div>
 
-                <div className='pricing-marketing-card__features'>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('立即获得')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--max'>
-                      ￥699.00
-                    </span>
-                    {t('额度')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('折合')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--max'>
-                      8折
-                    </span>
-                    {t('优惠')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('额度有效期30天')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('高级速率支持')}
-                  </PlanFeature>
-                </div>
-
-                <PlanButton
-                  className='pricing-marketing-button--accent'
-                  onClick={() => goToTopUp('MAX')}
-                >
-                  {t('选择 MAX')}
-                </PlanButton>
-              </article>
-
-              <article className='pricing-marketing-card pricing-marketing-card--ultra'>
-                <div className='pricing-marketing-card__ribbon pricing-marketing-card__ribbon--orange'>
-                  {t('顶级')}
-                </div>
-                <div className='pricing-marketing-card__header'>
-                  <h2 className='pricing-marketing-card__title pricing-marketing-card__title--ultra'>
-                    ULTRA
-                  </h2>
-                  <div className='pricing-marketing-card__price-wrap'>
-                    <div className='pricing-marketing-card__price'>¥1259</div>
-                    <div className='pricing-marketing-card__meta'>
-                      <p className='pricing-marketing-card__original'>
-                        {t('原价')} ¥1678
-                      </p>
-                      <p className='pricing-marketing-card__saving pricing-marketing-card__saving--ultra'>
-                        {t('优惠')}7.5折 · {t('省')}¥419
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className='pricing-marketing-card__features'>
-                  <PlanFeature tone='pricing-marketing-feature__icon--orange'>
-                    {t('立即获得')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--ultra'>
-                      ￥1,678.00
-                    </span>
-                    {t('额度')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--orange'>
-                    {t('折合')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--ultra'>
-                      7.5折
-                    </span>
-                    {t('优惠')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--orange'>
-                    {t('额度有效期30天')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--orange'>
-                    {t('最高速率支持')}
-                  </PlanFeature>
-                </div>
-
-                <PlanButton
-                  className='pricing-marketing-button--orange'
-                  onClick={() => goToTopUp('ULTRA')}
-                >
-                  {t('选择 ULTRA')}
-                </PlanButton>
-              </article>
+                    <PlanButton
+                      className={plan.pricingButtonClassName}
+                      onClick={() => goToTopUp(plan.key)}
+                    >
+                      {t(`选择 ${plan.key}`)}
+                    </PlanButton>
+                  </article>
+                );
+              })}
             </div>
 
             <div className='pricing-marketing-grid pricing-marketing-grid--secondary'>
