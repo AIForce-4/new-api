@@ -16,6 +16,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
 import { UserContext } from '../../context/User';
+import {
+  SUBSCRIPTION_PLAN_DEFINITIONS,
+  formatPricingAmount,
+  getSubscriptionPlanDiscountLabel,
+  getSubscriptionPlanQuota,
+} from '../../constants';
 import { OpenAI, Claude, Gemini } from '../../helpers/lobeIcons';
 
 const ScrollReveal = ({
@@ -250,8 +256,8 @@ const MarketingHome = () => {
   );
 
   const pricingPlans = useMemo(
-    () => [
-      {
+    () => {
+      const paygoPlan = {
         name: 'PAYGO',
         price: t('按量付费'),
         subtitle: t('永不过期'),
@@ -268,49 +274,40 @@ const MarketingHome = () => {
           { prefix: t('标准价格') },
           { prefix: t('永不过期'), accentOnly: true },
         ],
-      },
-      {
-        name: 'PRO',
-        price: '¥259',
-        buttonLabel: t('选择 PRO'),
-        toneClassName: 'marketing-pricing-card--pro',
-        buttonClassName: 'marketing-pricing-card__button--outline',
-        features: [
-          { prefix: t('立即获得'), accent: '￥305.00', suffix: t('额度') },
-          { prefix: t('折合'), accent: t('8.5折'), suffix: t('优惠') },
-          { prefix: t('额度有效期30天') },
-          { prefix: t('基本速率支持') },
-        ],
-      },
-      {
-        name: 'MAX',
-        price: '¥559',
-        badge: t('推荐'),
-        buttonLabel: t('选择 MAX'),
-        toneClassName: 'marketing-pricing-card--max',
-        buttonClassName: 'marketing-pricing-card__button--accent',
-        features: [
-          { prefix: t('立即获得'), accent: '￥699.00', suffix: t('额度') },
-          { prefix: t('折合'), accent: t('8折'), suffix: t('优惠') },
-          { prefix: t('额度有效期30天') },
-          { prefix: t('高级速率支持') },
-        ],
-      },
-      {
-        name: 'ULTRA',
-        price: '¥1259',
-        badge: t('顶级'),
-        buttonLabel: t('选择 ULTRA'),
-        toneClassName: 'marketing-pricing-card--ultra',
-        buttonClassName: 'marketing-pricing-card__button--orange',
-        features: [
-          { prefix: t('立即获得'), accent: '￥1,678.00', suffix: t('额度') },
-          { prefix: t('折合'), accent: t('7.5折'), suffix: t('优惠') },
-          { prefix: t('额度有效期30天') },
-          { prefix: t('最高速率支持') },
-        ],
-      },
-    ],
+      };
+
+      const subscriptionPlans = SUBSCRIPTION_PLAN_DEFINITIONS.map((plan) => {
+        const quota = getSubscriptionPlanQuota(plan.price, plan.discount);
+        return {
+          name: plan.key,
+          price: formatPricingAmount(plan.price),
+          badge: plan.badgeKey ? t(plan.badgeKey) : null,
+          buttonLabel: t(`选择 ${plan.key}`),
+          toneClassName: plan.homeToneClassName,
+          buttonClassName: plan.homeButtonClassName,
+          features: [
+            {
+              prefix: t('立即获得'),
+              accent: formatPricingAmount(quota, {
+                symbol: '￥',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }),
+              suffix: t('额度'),
+            },
+            {
+              prefix: t('折合'),
+              accent: t(getSubscriptionPlanDiscountLabel(plan.discount)),
+              suffix: t('优惠'),
+            },
+            { prefix: t('额度有效期30天') },
+            { prefix: t(plan.supportTextKey) },
+          ],
+        };
+      });
+
+      return [paygoPlan, ...subscriptionPlans];
+    },
     [t],
   );
 
