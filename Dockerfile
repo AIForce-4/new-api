@@ -10,7 +10,7 @@ RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) bun run b
 
 FROM golang:alpine AS builder2
 ENV GO111MODULE=on CGO_ENABLED=0
-ARG GOPROXY=https://proxy.golang.org,direct
+ARG GOPROXY=https://goproxy.cn,direct
 ARG GOSUMDB=sum.golang.org
 ENV GOPROXY=${GOPROXY} GOSUMDB=${GOSUMDB}
 

@@ -43,11 +43,8 @@ export default defineConfig(({ mode }) => {
       },
       react(),
     ],
-    // 【关键修改 1】优化依赖配置
     optimizeDeps: {
       force: true,
-      // 将 lottie-web 排除在预构建之外，防止 Vite 尝试分析它导致死锁
-      exclude: ['lottie-web'], 
       esbuildOptions: {
         loader: {
           '.js': 'jsx',
@@ -86,8 +83,6 @@ export default defineConfig(({ mode }) => {
               'react-i18next',
               'i18next-browser-languagedetector',
             ],
-            // 【关键修改 5】将 lottie-web 单独拆分到一个 chunk，避免与其他代码混合混淆
-            'lottie-player': ['lottie-web'],
           },
         },
       },
