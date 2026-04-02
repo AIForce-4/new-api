@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { Modal } from '@douyinfe/semi-ui';
 import { getRelativeTime } from '../../helpers';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
@@ -34,6 +35,8 @@ import {
 } from '../../helpers/dashboard';
 
 const Dashboard = () => {
+  const [groupPromoVisible, setGroupPromoVisible] = useState(false);
+
   // ========== Context ==========
   const [userState, userDispatch] = useContext(UserContext);
   const [statusState, statusDispatch] = useContext(StatusContext);
@@ -119,8 +122,45 @@ const Dashboard = () => {
     initChart();
   }, []);
 
+  useEffect(() => {
+    if (!userState?.user?.id) {
+      return;
+    }
+
+    const storageKey = `console-group-promo-shown-${userState.user.id}`;
+    if (localStorage.getItem(storageKey)) {
+      return;
+    }
+
+    setGroupPromoVisible(true);
+    localStorage.setItem(storageKey, '1');
+  }, [userState?.user?.id]);
+
   return (
     <div className='console-dashboard h-full'>
+      <Modal
+        centered
+        className='group-promo-dialog'
+        footer={null}
+        onCancel={() => setGroupPromoVisible(false)}
+        title='加入用户群，立送 8 元额度'
+        visible={groupPromoVisible}
+        width={720}
+        bodyStyle={{ overflowY: 'visible' }}
+      >
+        <div className='group-promo-modal'>
+          <div className='group-promo-modal__badge'>限时福利</div>
+          <div className='group-promo-modal__title'>扫码加入 aif4 客户群，联系客服即可领取 8 元额度</div>
+          <div className='group-promo-modal__desc'>
+            群内可获取使用交流、答疑支持和最新活动通知。二维码 7 天内有效，失效后重新进入控制台会自动刷新。
+          </div>
+          <div className='group-promo-modal__images'>
+            <img src='/pricing-contact-qr.jpg' alt='aif4 客服二维码' className='group-promo-modal__image' />
+            <img src='/qunPic.jpg' alt='aif4 客户群二维码' className='group-promo-modal__image' />
+          </div>
+        </div>
+      </Modal>
+
       <DashboardHeader
         getGreeting={dashboardData.getGreeting}
         greetingVisible={dashboardData.greetingVisible}

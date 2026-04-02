@@ -31,6 +31,105 @@ body {
   background-color: var(--semi-color-bg-0);
 }
 
+.group-promo-dialog .semi-modal-content,
+.group-promo-dialog .semi-modal-header,
+.group-promo-dialog .semi-modal-body,
+.group-promo-dialog .semi-modal-footer {
+  border-radius: 20px;
+}
+
+.group-promo-dialog .semi-modal-body {
+  max-height: 70vh;
+  overflow-y: visible;
+}
+
+.group-promo-modal .semi-image-preview,
+.group-promo-modal .semi-image-img,
+.group-promo-modal__image {
+  border-radius: 20px;
+}
+
+.group-promo-modal .semi-modal-content,
+.group-promo-modal .semi-modal-body,
+.group-promo-modal .semi-modal-header,
+.group-promo-modal .semi-modal-footer {
+  border-radius: 20px;
+}
+
+.group-promo-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 4px 4px 46px;
+}
+
+.group-promo-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(var(--semi-orange-5), 0.12);
+  color: var(--semi-color-warning);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.group-promo-modal__title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--semi-color-text-0);
+}
+
+.group-promo-modal__desc {
+  max-width: 620px;
+  color: var(--semi-color-text-1);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.group-promo-modal__images {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.group-promo-modal__image {
+  width: 260px;
+  height: 320px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.group-promo-modal__footer {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .group-promo-modal__title {
+    font-size: 18px;
+  }
+
+  .group-promo-modal__images {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .group-promo-modal__footer {
+    flex-direction: column;
+  }
+}
+
 .contact-qr-modal {
   display: flex;
   flex-direction: column;
