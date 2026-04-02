@@ -256,7 +256,7 @@ function App() {
           path='/console/install/claude-code'
           element={
             <PrivateRoute>
-              <Navigate replace to='/console/install/claude-code/macos-linux' />
+              <Navigate replace to='/console/install/claude-code/windows' />
             </PrivateRoute>
           }
         />
@@ -264,7 +264,7 @@ function App() {
           path='/console/install/codex'
           element={
             <PrivateRoute>
-              <Navigate replace to='/console/install/codex/macos-linux' />
+              <Navigate replace to='/console/install/codex/windows' />
             </PrivateRoute>
           }
         />

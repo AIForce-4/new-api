@@ -122,11 +122,6 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         itemKey: 'topup',
         to: '/topup',
       },
-      {
-        text: t('个人设置'),
-        itemKey: 'personal',
-        to: '/personal',
-      },
     ];
 
     // 根据配置过滤项目

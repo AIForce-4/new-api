@@ -139,7 +139,7 @@ const MarketingHome = () => {
     () => [
       {
         label: 'macOS',
-        to: '/console/install/claude-code/macos-linux',
+        to: '/console/install/claude-code/macos',
         icon: '/home/macos.svg',
       },
       {
@@ -149,7 +149,7 @@ const MarketingHome = () => {
       },
       {
         label: 'Linux',
-        to: '/console/install/claude-code/macos-linux',
+        to: '/console/install/claude-code/linux',
         icon: '/home/linux.svg',
       },
     ],
@@ -276,6 +276,7 @@ const MarketingHome = () => {
         ],
       };
 
+      /*
       const subscriptionPlans = SUBSCRIPTION_PLAN_DEFINITIONS.map((plan) => {
         const quota = getSubscriptionPlanQuota(plan.price, plan.discount);
         return {
@@ -305,8 +306,9 @@ const MarketingHome = () => {
           ],
         };
       });
+      */
 
-      return [paygoPlan, ...subscriptionPlans];
+      return [paygoPlan];
     },
     [t],
   );
@@ -321,7 +323,7 @@ const MarketingHome = () => {
               <span className='marketing-hero__headline'>
                 {t('企业级')}
                 <span className='marketing-hero__ticket'>
-                  GPT-5.4
+                  Claude Opus-4.6
                 </span>
               </span>
               <br />
@@ -357,10 +359,10 @@ const MarketingHome = () => {
                     {t('查看使用教程')}
                   </Button>
                 </Link>
-                <span className='marketing-hero__badge'>
+                {/* <span className='marketing-hero__badge'>
                   <span className='marketing-hero__badge-dot' />
                   {t('领取8元永久额度')}
-                </span>
+                </span> */}
               </div>
             </div>
 
@@ -671,12 +673,12 @@ const MarketingHome = () => {
                 '不仅仅是聚合，更是加速。选择我们，告别API焦虑。',
               )}
             </p>
-            <div className='marketing-story-callout__actions'>
+            {/* <div className='marketing-story-callout__actions'>
               <Link to='/about' className='marketing-inline-link'>
                 <span>{t('查看部署文档')}</span>
                 <ArrowRight size={16} />
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

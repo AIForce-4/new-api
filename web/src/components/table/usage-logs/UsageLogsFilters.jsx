@@ -139,6 +139,7 @@ const LogsFilters = ({
               htmlType='submit'
               loading={loading}
               size='small'
+              className='!border !border-[var(--app-border)]'
             >
               {t('查询')}
             </Button>
@@ -154,6 +155,7 @@ const LogsFilters = ({
                 }
               }}
               size='small'
+              className='!border !border-[var(--app-border)]'
             >
               {t('重置')}
             </Button>
@@ -161,6 +163,7 @@ const LogsFilters = ({
               type='tertiary'
               onClick={() => setShowColumnSelector(true)}
               size='small'
+              className='!border !border-[var(--app-border)]'
             >
               {t('列设置')}
             </Button>

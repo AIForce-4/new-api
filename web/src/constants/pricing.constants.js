@@ -8,7 +8,7 @@ export const SUBSCRIPTION_PLAN_DEFINITIONS = [
     homeButtonClassName: 'marketing-pricing-card__button--outline',
     pricingToneClassName: 'pricing-marketing-card--lite',
     pricingButtonClassName: 'pricing-marketing-button--outline',
-    supportTextKey: '基础速率支持',
+    supportTextKey: '最高速率支持',
   },
   {
     key: 'PRO',
@@ -19,7 +19,7 @@ export const SUBSCRIPTION_PLAN_DEFINITIONS = [
     homeButtonClassName: 'marketing-pricing-card__button--outline',
     pricingToneClassName: 'pricing-marketing-card--pro',
     pricingButtonClassName: 'pricing-marketing-button--outline',
-    supportTextKey: '标准速率支持',
+    supportTextKey: '最高速率支持',
   },
   {
     key: 'MAX',
@@ -30,7 +30,7 @@ export const SUBSCRIPTION_PLAN_DEFINITIONS = [
     homeButtonClassName: 'marketing-pricing-card__button--accent',
     pricingToneClassName: 'pricing-marketing-card--max',
     pricingButtonClassName: 'pricing-marketing-button--accent',
-    supportTextKey: '高级速率支持',
+    supportTextKey: '最高速率支持',
   },
   {
     key: 'ULTRA',

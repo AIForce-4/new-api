@@ -75,6 +75,7 @@ const RechargeCard = ({
   activeSubscriptions = [],
   allSubscriptions = [],
   reloadSubscriptionSelf,
+  onOpenContact,
 }) => {
   const onlineFormApiRef = useRef(null);
   const redeemFormApiRef = useRef(null);
@@ -275,6 +276,7 @@ const RechargeCard = ({
                           {payMethods.map((payMethod) => {
                             const minTopupVal = Number(payMethod.min_topup) || 0;
                             const isStripe = payMethod.type === 'stripe';
+                            const isAlipay = payMethod.type === 'alipay';
                             const disabled =
                               (!enableOnlineTopUp && !isStripe) ||
                               (!enableStripeTopUp && isStripe) ||
@@ -288,7 +290,9 @@ const RechargeCard = ({
                                 onClick={() => preTopUp(payMethod.type)}
                                 disabled={disabled}
                                 loading={
-                                  paymentLoading && payWay === payMethod.type
+                                  !isAlipay &&
+                                  paymentLoading &&
+                                  payWay === payMethod.type
                                 }
                                 icon={
                                   payMethod.type === 'alipay' ? (
@@ -312,6 +316,28 @@ const RechargeCard = ({
                                 {payMethod.name}
                               </Button>
                             );
+
+                            if (isAlipay) {
+                              return (
+                                <div
+                                  key={payMethod.type}
+                                  className='flex flex-wrap items-center gap-2'
+                                >
+                                  {buttonEl}
+                                  {/* <Text type='secondary'>
+                                    {t('暂不支持支付宝支付，请加客服微信付款')}
+                                  </Text>
+                                  <Button
+                                    theme='solid'
+                                    type='primary'
+                                    onClick={onOpenContact}
+                                    className='!rounded-lg'
+                                  >
+                                    {t('客服微信')}
+                                  </Button> */}
+                                </div>
+                              );
+                            }
 
                             return disabled &&
                               minTopupVal > Number(topUpCount || 0) ? (

@@ -11,11 +11,11 @@ import {
 } from '../../helpers';
 import { Modal, Toast } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
 
 import RechargeCard from './RechargeCard';
-import InvitationCard from './InvitationCard';
 import TransferModal from './modals/TransferModal';
 import PaymentConfirmModal from './modals/PaymentConfirmModal';
 import TopupHistoryModal from './modals/TopupHistoryModal';
@@ -67,6 +67,7 @@ const TopUp = () => {
 
   // 账单Modal状态
   const [openHistory, setOpenHistory] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   // 订阅相关
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
@@ -620,6 +621,14 @@ const TopUp = () => {
     setOpenHistory(false);
   };
 
+  const handleOpenContact = () => {
+    setContactOpen(true);
+  };
+
+  const handleCloseContact = () => {
+    setContactOpen(false);
+  };
+
   const handleCreemCancel = () => {
     setCreemOpen(false);
     setSelectedCreemProduct(null);
@@ -718,6 +727,35 @@ const TopUp = () => {
           )}
         </Modal>
 
+        {contactOpen && (
+          <div
+            className='pricing-marketing-contact-overlay'
+            onClick={handleCloseContact}
+          >
+            <div
+              className='pricing-marketing-contact-modal'
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                className='pricing-marketing-contact-modal__close'
+                onClick={handleCloseContact}
+                aria-label={t('关闭')}
+              >
+                <X size={24} />
+              </button>
+              <h3>{t('扫码添加客服微信')}</h3>
+              <div className='pricing-marketing-contact-modal__image-wrap'>
+                <img
+                  src='/pricing-contact-qr.jpg'
+                  alt={t('客服微信二维码')}
+                  className='pricing-marketing-contact-modal__image'
+                />
+              </div>
+              <p>{t('微信扫一扫，添加客服获取帮助')}</p>
+            </div>
+          </div>
+        )}
+
         {/* 主布局区域 */}
         <div className='grid grid-cols-1 gap-6'>
           <RechargeCard
@@ -762,14 +800,7 @@ const TopUp = () => {
             activeSubscriptions={activeSubscriptions}
             allSubscriptions={allSubscriptions}
             reloadSubscriptionSelf={getSubscriptionSelf}
-          />
-          <InvitationCard
-            t={t}
-            userState={userState}
-            renderQuota={renderQuota}
-            setOpenTransfer={setOpenTransfer}
-            affLink={affLink}
-            handleAffLinkClick={handleAffLinkClick}
+            onOpenContact={handleOpenContact}
           />
         </div>
       </div>

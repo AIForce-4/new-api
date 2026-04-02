@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { Modal } from '@douyinfe/semi-ui';
+import { Modal, Toast } from '@douyinfe/semi-ui';
 import {
   ChevronDown,
   ChevronUp,
@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Claude, OpenAI } from '../../helpers/lobeIcons';
+import MarkdownRenderer from '../common/markdown/MarkdownRenderer';
 import { INSTALL_GUIDES } from './installGuideData';
 
 const PRODUCT_ICONS = {
@@ -38,6 +39,35 @@ const renderRichText = (segments) =>
     ),
   );
 
+const CopyableCodeBlock = ({ code, language = 'bash' }) => {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      Toast.success('已复制命令');
+    } catch {
+      Toast.error('复制失败，请手动复制');
+    }
+  };
+
+  return (
+    <div className='console-docs__code-block-wrap'>
+      <div className='console-docs__code-block-header'>
+        <span className='console-docs__code-block-label'>{language}</span>
+        <button
+          className='console-docs__support-button console-docs__code-copy-button'
+          onClick={handleCopy}
+          type='button'
+        >
+          一键复制
+        </button>
+      </div>
+      <pre className='console-docs__code-block'>
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+};
+
 const renderBlock = (block, key) => {
   if (block.type === 'richText') {
     return (
@@ -47,11 +77,32 @@ const renderBlock = (block, key) => {
     );
   }
 
-  if (block.type === 'code') {
+  if (block.type === 'image') {
     return (
-      <pre key={key} className='console-docs__code-block'>
-        <code>{block.code}</code>
-      </pre>
+      <img
+        key={key}
+        alt={block.alt}
+        className='console-docs__image'
+        loading='lazy'
+        src={block.src}
+      />
+    );
+  }
+
+  if (block.type === 'code') {
+    return <CopyableCodeBlock key={key} code={block.code} language={block.language} />;
+  }
+
+  if (block.type === 'note') {
+    return (
+      <div key={key} className='console-docs__note'>
+        {block.title ? <p className='console-docs__note-title'>{block.title}</p> : null}
+        <ul className='console-docs__note-list'>
+          {block.items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
     );
   }
 
@@ -259,6 +310,36 @@ const PlatformTabs = ({ activePlatformId, guide }) => (
   </div>
 );
 
+const MarkdownInstallContent = ({ platform }) => (
+  <div className='console-docs__content'>
+    <section className='console-docs__section-card console-docs__section-card--markdown'>
+      <div className='console-docs__section-body'>
+        <MarkdownRenderer
+          className='console-docs__markdown-body'
+          content={platform.markdown || ''}
+          fontSize={15}
+        />
+      </div>
+    </section>
+    {Array.isArray(platform.codeBlocks) && platform.codeBlocks.length > 0 ? (
+      <section className='console-docs__section-card console-docs__section-card--markdown'>
+        <div className='console-docs__section-head'>
+          <div className='console-docs__section-title-wrap'>
+            <h2 className='console-docs__section-title'>常用命令</h2>
+          </div>
+        </div>
+        <div className='console-docs__section-body'>
+          <div className='console-docs__section-stack'>
+            {platform.codeBlocks.map((block) => (
+              <CopyableCodeBlock key={block.id} code={block.code} language={block.language} />
+            ))}
+          </div>
+        </div>
+      </section>
+    ) : null}
+  </div>
+);
+
 const sectionIcons = {
   callout: ShieldCheck,
   section: FileCode2,
@@ -341,7 +422,7 @@ const InstallSections = ({ onSupportClick, openAccordions, platform, toggleAccor
 const ConsoleInstallPage = ({ productId }) => {
   const { platform: platformId } = useParams();
   const guide = INSTALL_GUIDES[productId];
-  const fallbackPlatformId = guide?.platforms?.[0]?.id || 'macos-linux';
+  const fallbackPlatformId = guide?.platforms?.find((item) => item.id === 'windows')?.id || guide?.platforms?.[0]?.id || 'windows';
   const platform = useMemo(
     () => guide?.platforms?.find((item) => item.id === platformId) || null,
     [guide, platformId],
@@ -350,7 +431,7 @@ const ConsoleInstallPage = ({ productId }) => {
   const [openAccordions, setOpenAccordions] = useState(new Set());
 
   useEffect(() => {
-    if (!guide || !platform) return;
+    if (!guide || !platform || platform.contentType === 'markdown') return;
 
     const nextOpenAccordions = new Set(
       platform.sections
@@ -370,28 +451,34 @@ const ConsoleInstallPage = ({ productId }) => {
   }
 
   const supportContact =
-    platform.sections.find((section) => section.supportContact)?.supportContact || null;
+    platform.sections?.find((section) => section.supportContact)?.supportContact || null;
+
+  const isMarkdownContent = platform.contentType === 'markdown';
 
   return (
     <>
       <div className='console-docs console-docs--install'>
         <InstallHero guide={guide} platform={platform} />
-        <InstallSections
-          onSupportClick={() => setSupportVisible(true)}
-          openAccordions={openAccordions}
-          platform={platform}
-          toggleAccordion={(sectionId) => {
-            setOpenAccordions((current) => {
-              const next = new Set(current);
-              if (next.has(sectionId)) {
-                next.delete(sectionId);
-              } else {
-                next.add(sectionId);
-              }
-              return next;
-            });
-          }}
-        />
+        {isMarkdownContent ? (
+          <MarkdownInstallContent platform={platform} />
+        ) : (
+          <InstallSections
+            onSupportClick={() => setSupportVisible(true)}
+            openAccordions={openAccordions}
+            platform={platform}
+            toggleAccordion={(sectionId) => {
+              setOpenAccordions((current) => {
+                const next = new Set(current);
+                if (next.has(sectionId)) {
+                  next.delete(sectionId);
+                } else {
+                  next.add(sectionId);
+                }
+                return next;
+              });
+            }}
+          />
+        )}
       </div>
       {supportContact ? (
         <Modal

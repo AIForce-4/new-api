@@ -64,7 +64,7 @@ const TokensFilters = ({
             type='tertiary'
             htmlType='submit'
             loading={loading || searching}
-            className='flex-1 md:flex-initial md:w-auto'
+            className='flex-1 md:flex-initial md:w-auto !border !border-[var(--app-border)]'
             size='small'
           >
             {t('查询')}
@@ -73,7 +73,7 @@ const TokensFilters = ({
           <Button
             type='tertiary'
             onClick={handleReset}
-            className='flex-1 md:flex-initial md:w-auto'
+            className='flex-1 md:flex-initial md:w-auto !border !border-[var(--app-border)]'
             size='small'
           >
             {t('重置')}

@@ -137,9 +137,9 @@ export const CONSOLE_PRICING_PRODUCTS = [
           key: 'gpt-54',
           cells: [
             { label: '模型名称', content: 'gpt-5.4', strong: true },
-            { label: '输入价格', content: '$5.00 / 1M tokens' },
-            { label: '输出价格', content: '$22.5 / 1M tokens' },
-            { label: '缓存读取', content: '$0.5 / 1M tokens' },
+            { label: '输入价格', content: '$2.5 / 1M tokens' },
+            { label: '输出价格', content: '$15 / 1M tokens' },
+            { label: '缓存读取', content: '$0.25 / 1M tokens' },
             {
               label: '描述',
               content: '5.4 旗舰模型，推理深度与复杂工程任务处理能力再创新高',

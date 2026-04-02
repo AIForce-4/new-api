@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@douyinfe/semi-ui';
+import { X } from 'lucide-react';
 import { getFooterHTML, getLogo, getSystemName } from '../../helpers';
 import { StatusContext } from '../../context/Status';
 import { Link, useLocation } from 'react-router-dom';
@@ -8,6 +9,7 @@ import { Link, useLocation } from 'react-router-dom';
 const FooterBar = () => {
   const { t } = useTranslation();
   const [footer, setFooter] = useState(getFooterHTML());
+  const [contactOpen, setContactOpen] = useState(false);
   const systemName = getSystemName();
   const logo = getLogo();
   const [statusState] = useContext(StatusContext);
@@ -17,6 +19,8 @@ const FooterBar = () => {
   const isMarketingFooterRoute = [
     '/',
     '/about',
+    '/pricing',
+    '/docs',
     '/login',
     '/register',
     '/reset',
@@ -233,6 +237,13 @@ const FooterBar = () => {
               <h3>{t('资源')}</h3>
               <Link to='/docs'>{t('使用教程')}</Link>
               <Link to='/about'>{t('品牌故事')}</Link>
+              <button
+                type='button'
+                className='text-left'
+                onClick={() => setContactOpen(true)}
+              >
+                {t('联系我们')}
+              </button>
               {/* <a href='https://github.com/QuantumNous/new-api' target='_blank' rel='noopener noreferrer'>
                 GitHub
               </a> */}
@@ -290,29 +301,60 @@ const FooterBar = () => {
   }, []);
 
   return (
-    <div className='w-full app-footer-shell'>
-      {footer ? (
-        <div className='relative app-footer-custom'>
+    <>
+      <div className='w-full app-footer-shell'>
+        {footer ? (
+          <div className='relative app-footer-custom'>
+            <div
+              className='custom-footer'
+              dangerouslySetInnerHTML={{ __html: footer }}
+            ></div>
+            <div className='absolute bottom-2 right-4 text-xs !text-semi-color-text-2 opacity-70'>
+              <span>{t('设计与开发由')} </span>
+              <a
+                href=''
+                target=''
+                rel='noopener noreferrer'
+                className='!text-semi-color-primary font-medium'
+              >
+                {marketingBrandName}
+              </a>
+            </div>
+          </div>
+        ) : (
+          isMarketingFooterRoute ? marketingFooter : customFooter
+        )}
+      </div>
+
+      {contactOpen && (
+        <div
+          className='pricing-marketing-contact-overlay'
+          onClick={() => setContactOpen(false)}
+        >
           <div
-            className='custom-footer'
-            dangerouslySetInnerHTML={{ __html: footer }}
-          ></div>
-          <div className='absolute bottom-2 right-4 text-xs !text-semi-color-text-2 opacity-70'>
-            <span>{t('设计与开发由')} </span>
-            <a
-              href=''
-              target=''
-              rel='noopener noreferrer'
-              className='!text-semi-color-primary font-medium'
+            className='pricing-marketing-contact-modal'
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className='pricing-marketing-contact-modal__close'
+              onClick={() => setContactOpen(false)}
+              aria-label={t('关闭')}
             >
-              {marketingBrandName}
-            </a>
+              <X size={24} />
+            </button>
+            <h3>{t('扫码添加客服微信')}</h3>
+            <div className='pricing-marketing-contact-modal__image-wrap'>
+              <img
+                src='/pricing-contact-qr.jpg'
+                alt={t('客服微信二维码')}
+                className='pricing-marketing-contact-modal__image'
+              />
+            </div>
+            <p>{t('微信扫一扫，添加客服获取帮助')}</p>
           </div>
         </div>
-      ) : (
-        isMarketingFooterRoute ? marketingFooter : customFooter
       )}
-    </div>
+    </>
   );
 };
 

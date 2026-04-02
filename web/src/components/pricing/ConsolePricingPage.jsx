@@ -221,7 +221,7 @@ const ConsolePricingPage = () => {
       </header>
 
       <div className='console-model-pricing__content'>
-        <SectionCard badge={formulaBadge} title='优惠计算公式'>
+        {/* <SectionCard badge={formulaBadge} title='优惠计算公式'>
           {isMobile ? (
             <MobileCards rows={activeProduct.formulaTable.rows} />
           ) : (
@@ -230,7 +230,7 @@ const ConsolePricingPage = () => {
               rows={activeProduct.formulaTable.rows}
             />
           )}
-        </SectionCard>
+        </SectionCard> */}
 
         <SectionCard title='官方价格'>
           {isMobile ? (
@@ -243,9 +243,9 @@ const ConsolePricingPage = () => {
           )}
         </SectionCard>
 
-        <SectionCard title='渠道'>
+        {/* <SectionCard title='渠道'>
           <ChannelCards channels={activeProduct.channels} />
-        </SectionCard>
+        </SectionCard> */}
       </div>
     </div>
   );

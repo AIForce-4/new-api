@@ -12,9 +12,8 @@ import mermaid from 'mermaid';
 import React from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import clsx from 'clsx';
-import { Button, Tooltip, Toast } from '@douyinfe/semi-ui';
+import { Button, Toast } from '@douyinfe/semi-ui';
 import { copy, rehypeSplitWordsIntoSpans } from '../../../helpers';
-import { IconCopy } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
 
 mermaid.initialize({
@@ -123,6 +122,31 @@ export function PreCode(props) {
   const [htmlCode, setHtmlCode] = useState('');
   const { t } = useTranslation();
 
+  const getCodeText = () => {
+    const codeElement = ref.current?.querySelector('code');
+    return codeElement?.textContent ?? '';
+  };
+
+  const getLanguageLabel = () => {
+    const codeElement = ref.current?.querySelector('code');
+    const match = codeElement?.className?.match(/language-([\w-]+)/);
+    const language = match?.[1] || 'text';
+    return language === 'bash' ? 'terminal' : language;
+  };
+
+  const handleCopy = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const code = getCodeText();
+    copy(code).then((success) => {
+      if (success) {
+        Toast.success(t('代码已复制到剪贴板'));
+      } else {
+        Toast.error(t('复制失败，请手动复制'));
+      }
+    });
+  };
+
   const renderArtifacts = useDebouncedCallback(() => {
     if (!ref.current) return;
     const mermaidDom = ref.current.querySelector('code.language-mermaid');
@@ -169,66 +193,24 @@ export function PreCode(props) {
 
   return (
     <>
-      <pre
-        ref={ref}
-        style={{
-          position: 'relative',
-          backgroundColor: 'var(--semi-color-fill-0)',
-          border: '1px solid var(--semi-color-border)',
-          borderRadius: '6px',
-          padding: '12px',
-          margin: '12px 0',
-          overflow: 'auto',
-          fontSize: '14px',
-          lineHeight: '1.4',
-        }}
-      >
-        <div
-          className='copy-code-button'
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            display: 'flex',
-            gap: '4px',
-            zIndex: 10,
-            opacity: 0,
-            transition: 'opacity 0.2s ease',
-          }}
-        >
-          <Tooltip content={t('复制代码')}>
-            <Button
-              size='small'
-              theme='borderless'
-              icon={<IconCopy />}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (ref.current) {
-                  const codeElement = ref.current.querySelector('code');
-                  const code = codeElement?.textContent ?? '';
-                  copy(code).then((success) => {
-                    if (success) {
-                      Toast.success(t('代码已复制到剪贴板'));
-                    } else {
-                      Toast.error(t('复制失败，请手动复制'));
-                    }
-                  });
-                }
-              }}
-              style={{
-                padding: '4px',
-                backgroundColor: 'var(--semi-color-bg-2)',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                border: '1px solid var(--semi-color-border)',
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-              }}
-            />
-          </Tooltip>
+      <div className='console-docs__code-block-wrap'>
+        <div className='console-docs__code-block-header'>
+          <span className='console-docs__code-block-label'>{getLanguageLabel()}</span>
+          <button
+            className='console-docs__support-button console-docs__code-copy-button'
+            onClick={handleCopy}
+            type='button'
+          >
+            一键复制
+          </button>
         </div>
-        {props.children}
-      </pre>
+        <pre
+          ref={ref}
+          className='console-docs__code-block console-docs__markdown-code-block'
+        >
+          {props.children}
+        </pre>
+      </div>
       {mermaidCode.length > 0 && (
         <Mermaid code={mermaidCode} key={mermaidCode} />
       )}

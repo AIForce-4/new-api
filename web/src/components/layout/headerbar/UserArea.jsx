@@ -1,10 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar, Button, Dropdown, Typography } from '@douyinfe/semi-ui';
+import { Avatar, Button, Dropdown, Modal, Typography } from '@douyinfe/semi-ui';
 import { ChevronDown } from 'lucide-react';
 import {
   IconExit,
-  IconUserSetting,
   IconCreditCard,
   IconKey,
 } from '@douyinfe/semi-icons';
@@ -21,6 +20,7 @@ const UserArea = ({
   t,
 }) => {
   const dropdownRef = useRef(null);
+  const [showContactModal, setShowContactModal] = useState(false);
   if (isLoading) {
     return (
       <SkeletonWrapper
@@ -34,78 +34,93 @@ const UserArea = ({
 
   if (userState.user) {
     return (
-      <div className='relative' ref={dropdownRef}>
-        <Dropdown
-          position='bottomRight'
-          getPopupContainer={() => dropdownRef.current}
-          render={
-            <Dropdown.Menu className='header-dropdown-menu'>
-              <Dropdown.Item
-                onClick={() => {
-                  navigate('/console/personal');
-                }}
-                className='header-dropdown-item !px-3 !py-1.5 !text-sm'
-              >
-                <div className='flex items-center gap-2'>
-                  <IconUserSetting size='small' />
-                  <span>{t('个人设置')}</span>
-                </div>
-              </Dropdown.Item>
-              <Dropdown.Item
-                onClick={() => {
-                  navigate('/console/token');
-                }}
-                className='header-dropdown-item !px-3 !py-1.5 !text-sm'
-              >
-                <div className='flex items-center gap-2'>
-                  <IconKey size='small' />
-                  <span>{t('令牌管理')}</span>
-                </div>
-              </Dropdown.Item>
-              <Dropdown.Item
-                onClick={() => {
-                  navigate('/console/topup');
-                }}
-                className='header-dropdown-item !px-3 !py-1.5 !text-sm'
-              >
-                <div className='flex items-center gap-2'>
-                  <IconCreditCard size='small' />
-                  <span>{t('钱包管理')}</span>
-                </div>
-              </Dropdown.Item>
-              <Dropdown.Item
-                onClick={logout}
-                className='header-dropdown-item !px-3 !py-1.5 !text-sm'
-              >
-                <div className='flex items-center gap-2'>
-                  <IconExit size='small' />
-                  <span>{t('退出')}</span>
-                </div>
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          }
-        >
+      <>
+        <div className='flex items-center gap-2'>
           <Button
             theme='borderless'
             type='tertiary'
-            className='header-user-trigger flex items-center gap-1.5 !rounded-full'
+            className='header-contact-button !rounded-full'
+            onClick={() => setShowContactModal(true)}
           >
-            <Avatar
-              size='extra-small'
-              color={stringToColor(userState.user.username)}
-              className='mr-1'
-            >
-              {userState.user.username[0].toUpperCase()}
-            </Avatar>
-            <span className='hidden md:inline'>
-              <Typography.Text className='header-user-trigger__name !text-xs !font-medium mr-1'>
-                {userState.user.username}
-              </Typography.Text>
-            </span>
-            <ChevronDown size={14} className='header-user-trigger__icon text-xs' />
+            <span className='!text-xs !font-medium'>{t('联系我们')}</span>
           </Button>
-        </Dropdown>
-      </div>
+
+          <div className='relative' ref={dropdownRef}>
+            <Dropdown
+              position='bottomRight'
+              getPopupContainer={() => dropdownRef.current}
+              render={
+                <Dropdown.Menu className='header-dropdown-menu'>
+                  <Dropdown.Item
+                    onClick={() => {
+                      navigate('/console/token');
+                    }}
+                    className='header-dropdown-item !px-3 !py-1.5 !text-sm'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <IconKey size='small' />
+                      <span>{t('令牌管理')}</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    onClick={() => {
+                      navigate('/console/topup');
+                    }}
+                    className='header-dropdown-item !px-3 !py-1.5 !text-sm'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <IconCreditCard size='small' />
+                      <span>{t('钱包管理')}</span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    onClick={logout}
+                    className='header-dropdown-item !px-3 !py-1.5 !text-sm'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <IconExit size='small' />
+                      <span>{t('退出')}</span>
+                    </div>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              }
+            >
+              <Button
+                theme='borderless'
+                type='tertiary'
+                className='header-user-trigger flex items-center gap-1.5 !rounded-full'
+              >
+                <Avatar
+                  size='extra-small'
+                  color={stringToColor(userState.user.username)}
+                  className='mr-1'
+                >
+                  {userState.user.username[0].toUpperCase()}
+                </Avatar>
+                <span className='hidden md:inline'>
+                  <Typography.Text className='header-user-trigger__name !text-xs !font-medium mr-1'>
+                    {userState.user.username}
+                  </Typography.Text>
+                </span>
+                <ChevronDown size={14} className='header-user-trigger__icon text-xs' />
+              </Button>
+            </Dropdown>
+          </div>
+        </div>
+
+        <Modal
+          title={t('联系我们')}
+          visible={showContactModal}
+          footer={null}
+          onCancel={() => setShowContactModal(false)}
+          centered
+        >
+          <div className='contact-qr-modal'>
+            <img src='/pricing-contact-qr.jpg' alt={t('客服微信二维码')} />
+            <Typography.Text>{t('请使用微信扫码联系客服')}</Typography.Text>
+          </div>
+        </Modal>
+      </>
     );
   } else {
     const showRegisterButton = !isSelfUseMode;
@@ -133,7 +148,15 @@ const UserArea = ({
     }
 
     return (
-      <div className='flex items-center'>
+      <div className='flex items-center gap-2'>
+        <Button
+          theme='borderless'
+          type='tertiary'
+          className='header-contact-button !rounded-full'
+          onClick={() => setShowContactModal(true)}
+        >
+          <span className='!text-xs !font-medium'>{t('联系我们')}</span>
+        </Button>
         <Link to='/login' className='flex'>
           <Button
             theme='borderless'
@@ -156,6 +179,19 @@ const UserArea = ({
             </Link>
           </div>
         )}
+
+        <Modal
+          title={t('联系我们')}
+          visible={showContactModal}
+          footer={null}
+          onCancel={() => setShowContactModal(false)}
+          centered
+        >
+          <div className='contact-qr-modal'>
+            <img src='/pricing-contact-qr.jpg' alt={t('客服微信二维码')} />
+            <Typography.Text>{t('请使用微信扫码联系客服')}</Typography.Text>
+          </div>
+        </Modal>
       </div>
     );
   }

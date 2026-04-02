@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 import { UserContext } from '../../context/User';
@@ -28,6 +28,7 @@ const MarketingPricingPage = () => {
   const [userState] = useContext(UserContext);
   const navigate = useNavigate();
   const [contactOpen, setContactOpen] = useState(false);
+  /*
   const subscriptionPlans = SUBSCRIPTION_PLAN_DEFINITIONS.map((plan) => {
     const quota = getSubscriptionPlanQuota(plan.price, plan.discount);
     const savings = quota - plan.price;
@@ -40,6 +41,14 @@ const MarketingPricingPage = () => {
       discountLabel,
     };
   });
+  */
+  const pricingPlans = [
+    {
+      key: 'PAYGO',
+      isPayAsYouGo: true,
+    },
+    // ...subscriptionPlans,
+  ];
 
   const goToTopUp = (plan) => {
     if (!userState?.user) {
@@ -59,8 +68,54 @@ const MarketingPricingPage = () => {
               <p>{t('包月订阅或按量付费，灵活适配个人开发者与企业团队')}</p>
             </div>
 
-            <div className='pricing-marketing-grid'>
-              {subscriptionPlans.map((plan) => {
+            <div className='pricing-marketing-grid pricing-marketing-grid--single-row'>
+              {pricingPlans.map((plan) => {
+                if (plan.isPayAsYouGo) {
+                  return (
+                    <article
+                      key={plan.key}
+                      className='pricing-marketing-card pricing-marketing-card--paygo'
+                    >
+                      <div className='pricing-marketing-card__header'>
+                        <h2 className='pricing-marketing-card__title'>PAYGO</h2>
+                        <div className='pricing-marketing-card__price-wrap'>
+                          <div className='pricing-marketing-card__price pricing-marketing-card__price--label'>
+                            {t('按量付费')}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className='pricing-marketing-card__features'>
+                        <PlanFeature tone='pricing-marketing-feature__icon--accent'>
+                          {t('充值金额，获得')}
+                          <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--accent'>
+                            {t('等价人民币')}
+                          </span>
+                          {t('额度')}
+                        </PlanFeature>
+                        <PlanFeature tone='pricing-marketing-feature__icon--accent'>
+                          {t('按实际使用付费')}
+                        </PlanFeature>
+                        <PlanFeature tone='pricing-marketing-feature__icon--accent'>
+                          {t('标准价格')}
+                        </PlanFeature>
+                        <PlanFeature tone='pricing-marketing-feature__icon--accent'>
+                          <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--accent'>
+                            {t('永不过期')}
+                          </span>
+                        </PlanFeature>
+                      </div>
+
+                      <PlanButton
+                        className='pricing-marketing-button--default'
+                        onClick={() => goToTopUp()}
+                      >
+                        {t('立即充值')}
+                      </PlanButton>
+                    </article>
+                  );
+                }
+
                 const titleClassName = [
                   'pricing-marketing-card__title',
                   plan.key === 'MAX' && 'pricing-marketing-card__title--max',
@@ -71,15 +126,13 @@ const MarketingPricingPage = () => {
                 const savingClassName = [
                   'pricing-marketing-card__saving',
                   plan.key === 'MAX' && 'pricing-marketing-card__saving--max',
-                  plan.key === 'ULTRA' &&
-                    'pricing-marketing-card__saving--ultra',
+                  plan.key === 'ULTRA' && 'pricing-marketing-card__saving--ultra',
                 ]
                   .filter(Boolean)
                   .join(' ');
                 const featureAccentClassName = [
                   'pricing-marketing-feature__highlight',
-                  plan.key === 'MAX' &&
-                    'pricing-marketing-feature__highlight--max',
+                  plan.key === 'MAX' && 'pricing-marketing-feature__highlight--max',
                   plan.key === 'ULTRA' &&
                     'pricing-marketing-feature__highlight--ultra',
                   !['MAX', 'ULTRA'].includes(plan.key) &&
@@ -161,104 +214,11 @@ const MarketingPricingPage = () => {
                 );
               })}
             </div>
-
-            <div className='pricing-marketing-grid pricing-marketing-grid--secondary'>
-              <article className='pricing-marketing-card pricing-marketing-card--paygo'>
-                <div className='pricing-marketing-card__header'>
-                  <h2 className='pricing-marketing-card__title'>PAYGO</h2>
-                  <div className='pricing-marketing-card__price-wrap'>
-                    <div className='pricing-marketing-card__price pricing-marketing-card__price--label'>
-                      {t('按量付费')}
-                    </div>
-                  </div>
-                </div>
-
-                <div className='pricing-marketing-card__features'>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('充值金额，获得')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--accent'>
-                      {t('等价人民币')}
-                    </span>
-                    {t('额度')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('按实际使用付费')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    {t('标准价格')}
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--accent'>
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--accent'>
-                      {t('永不过期')}
-                    </span>
-                  </PlanFeature>
-                </div>
-
-                <PlanButton
-                  className='pricing-marketing-button--default'
-                  onClick={() => goToTopUp()}
-                >
-                  {t('立即充值')}
-                </PlanButton>
-              </article>
-
-              <article className='pricing-marketing-card pricing-marketing-card--enterprise'>
-                <div className='pricing-marketing-card__header'>
-                  <h2 className='pricing-marketing-card__title pricing-marketing-card__title--blue'>
-                    {t('企业认证')}
-                  </h2>
-                  <div className='pricing-marketing-card__price-wrap'>
-                    <div className='pricing-marketing-card__price pricing-marketing-card__price--blue'>
-                      ¥200
-                      <span className='pricing-marketing-card__price-suffix'>
-                        /月
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className='pricing-marketing-card__features'>
-                  <PlanFeature tone='pricing-marketing-feature__icon--blue'>
-                    {t('企业大额包量')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--blue'>
-                      {t('专属折扣')}
-                    </span>
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--blue'>
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--blue'>
-                      {t('APIKEY上限提升')}
-                    </span>
-                    ，{t('按')}
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--blue'>
-                      {t('APIKEY限制/查询用量')}
-                    </span>
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--blue'>
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--blue'>
-                      {t('优先开票')}
-                    </span>
-                  </PlanFeature>
-                  <PlanFeature tone='pricing-marketing-feature__icon--blue'>
-                    <span className='pricing-marketing-feature__highlight pricing-marketing-feature__highlight--blue'>
-                      {t('7×24小时')}
-                    </span>
-                    {t('专属客服群')}
-                  </PlanFeature>
-                </div>
-
-                <PlanButton
-                  className='pricing-marketing-button--blue-outline'
-                  onClick={() => setContactOpen(true)}
-                >
-                  {t('联系我们')}
-                </PlanButton>
-              </article>
-            </div>
           </div>
         </section>
 
         <section className='pricing-marketing-support'>
-          <p>{t('支持支付宝支付')}</p>
+          {/* <p>{t('支持支付宝支付')}</p> */}
           <p>
             {t('遇到问题？')}
             <button onClick={() => setContactOpen(true)}>{t('联系我们')}</button>
@@ -304,56 +264,6 @@ const MarketingPricingPage = () => {
             </article>
           </div>
         </section>
-
-        <footer className='pricing-marketing-footer'>
-          <div className='pricing-marketing-footer__inner'>
-            <div className='pricing-marketing-footer__grid'>
-              <div className='pricing-marketing-footer__column'>
-                <h3>{t('产品')}</h3>
-                <Link to='/about'>AI Force 介绍</Link>
-                <Link to='/pricing'>{t('价格方案')}</Link>
-                <Link to='/login'>{t('登录')}</Link>
-              </div>
-
-              <div className='pricing-marketing-footer__column'>
-                <h3>{t('资源')}</h3>
-                <Link to='/docs'>{t('使用教程')}</Link>
-                <Link to='/about'>{t('品牌故事')}</Link>
-              </div>
-
-              <div className='pricing-marketing-footer__column'>
-                <h3>{t('Claude 模型')}</h3>
-                <span>Claude Opus 4</span>
-                <span>Claude Sonnet 4.5</span>
-                <span>Claude Haiku 3.5</span>
-              </div>
-
-              <div className='pricing-marketing-footer__column'>
-                <h3>{t('服务承诺')}</h3>
-                <span>{t('透明定价')}</span>
-                <span>{t('隐私保护')}</span>
-                <span>{t('安全合规')}</span>
-              </div>
-
-              <div className='pricing-marketing-footer__column'>
-                <h3>{t('解决方案')}</h3>
-                <span>{t('AI 编程助手')}</span>
-                <span>{t('代码生成')}</span>
-                <span>{t('技术支持')}</span>
-              </div>
-
-              <div className='pricing-marketing-footer__column'>
-                <h3>{t('关于')}</h3>
-                <Link to='/about'>{t('关于我们')}</Link>
-                <a href='mailto:support@quantumnous.com'>{t('联系我们')}</a>
-              </div>
-            </div>
-
-            <div className='pricing-marketing-footer__meta'>
-              <p>© 2025 AI Force. {t('保留所有权利。')}</p>
-            </div>
-          </div>
-        </footer>
       </main>
 
       {contactOpen && (

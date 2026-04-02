@@ -335,6 +335,7 @@ const renderOperations = (
 
   return (
     <Space wrap>
+      {/*
       <SplitButtonGroup
         className='overflow-hidden'
         aria-label={t('项目操作按钮组')}
@@ -361,6 +362,7 @@ const renderOperations = (
           ></Button>
         </Dropdown>
       </SplitButtonGroup>
+      */}
 
       {record.status === 1 ? (
         <Button
@@ -374,6 +376,7 @@ const renderOperations = (
           {t('禁用')}
         </Button>
       ) : (
+        /*
         <Button
           size='small'
           onClick={async () => {
@@ -383,6 +386,8 @@ const renderOperations = (
         >
           {t('启用')}
         </Button>
+        */
+        <></>
       )}
 
       <Button
