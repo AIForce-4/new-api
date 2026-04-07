@@ -9,7 +9,6 @@ import {
   Typography,
 } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
-import { selectFilter } from '../../../../helpers';
 
 const APP_CONFIGS = {
   claude: {
@@ -162,10 +161,8 @@ export default function CCSwitchModal({
               optionList={modelOptions}
               value={models[field.key] || undefined}
               onChange={(val) => handleModelChange(field.key, val)}
-              filter={selectFilter}
               style={{ width: '100%' }}
               showClear
-              searchable
               emptyContent={t('暂无数据')}
             />
           </div>

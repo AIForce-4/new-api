@@ -415,7 +415,13 @@ function TokensPage() {
         })}
         t={tokensData.t}
       >
-        <TokensTable {...tokensData} />
+        <TokensTable
+          {...tokensData}
+          onCCSwitch={async (record) => {
+            const fullKey = await tokensData.fetchTokenKey(record);
+            openCCSwitchModalRef.current?.(fullKey);
+          }}
+        />
       </CardPro>
     </>
   );
