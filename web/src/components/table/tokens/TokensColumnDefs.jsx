@@ -309,6 +309,7 @@ const renderOperations = (
   setShowEdit,
   manageToken,
   refresh,
+  onCCSwitch,
   t,
 ) => {
   let chatsArray = [];
@@ -363,6 +364,14 @@ const renderOperations = (
         </Dropdown>
       </SplitButtonGroup>
       */}
+
+      <Button
+        type='tertiary'
+        size='small'
+        onClick={() => onCCSwitch(record)}
+      >
+        {t('CC Switch')}
+      </Button>
 
       {record.status === 1 ? (
         <Button
@@ -435,6 +444,7 @@ export const getTokensColumns = ({
   setEditingToken,
   setShowEdit,
   refresh,
+  onCCSwitch,
 }) => {
   return [
     {
@@ -513,6 +523,7 @@ export const getTokensColumns = ({
           setShowEdit,
           manageToken,
           refresh,
+          onCCSwitch,
           t,
         ),
     },
