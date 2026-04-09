@@ -31,6 +31,7 @@ const routerMap = {
   codex: '/console/install/codex',
   tutorial: '/console/tutorial',
   personal: '/console/personal',
+  providerWallet: '/console/provider-wallet',
 };
 
 const routePrefixes = {
@@ -139,6 +140,12 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         text: t('渠道管理'),
         itemKey: 'channel',
         to: '/channel',
+        className: isAdmin() ? '' : 'tableHiddle',
+      },
+      {
+        text: t('供应商管理'),
+        itemKey: 'providerWallet',
+        to: '/provider-wallet',
         className: isAdmin() ? '' : 'tableHiddle',
       },
       {

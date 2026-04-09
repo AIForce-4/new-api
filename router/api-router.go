@@ -244,6 +244,15 @@ func SetApiRouter(router *gin.Engine) {
 			channelRoute.POST("/upstream_updates/detect", controller.DetectChannelUpstreamModelUpdates)
 			channelRoute.POST("/upstream_updates/detect_all", controller.DetectAllChannelUpstreamModelUpdates)
 		}
+		providerWalletRoute := apiRouter.Group("/provider_wallet")
+		providerWalletRoute.Use(middleware.AdminAuth())
+		{
+			providerWalletRoute.GET("/", controller.GetAllProviderWallets)
+			providerWalletRoute.POST("/", controller.CreateProviderWallet)
+			providerWalletRoute.PUT("/:id", controller.UpdateProviderWallet)
+			providerWalletRoute.DELETE("/:id", controller.DeleteProviderWallet)
+			providerWalletRoute.POST("/:id/check", controller.CheckProviderWallet)
+		}
 		tokenRoute := apiRouter.Group("/token")
 		tokenRoute.Use(middleware.UserAuth())
 		{

@@ -18,6 +18,7 @@ import Setting from './pages/Setting';
 import PasswordResetForm from './components/auth/PasswordResetForm';
 import PasswordResetConfirm from './components/auth/PasswordResetConfirm';
 import Channel from './pages/Channel';
+import ProviderWallet from './pages/ProviderWallet';
 import Token from './pages/Token';
 import Redemption from './pages/Redemption';
 import TopUp from './pages/TopUp';
@@ -103,6 +104,14 @@ function App() {
           element={
             <AdminRoute>
               <Channel />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/provider-wallet'
+          element={
+            <AdminRoute>
+              <ProviderWallet />
             </AdminRoute>
           }
         />
