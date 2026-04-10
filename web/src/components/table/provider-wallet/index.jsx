@@ -179,6 +179,7 @@ function WalletCard({ wallet, onRefresh, onEdit, onDelete }) {
 export default function ProviderWalletTable() {
   const [wallets, setWallets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // null = create, object = edit
   const [form, setForm] = useState(emptyForm);
@@ -197,6 +198,33 @@ export default function ProviderWalletTable() {
       showError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshAllBalances = async () => {
+    setRefreshing(true);
+    try {
+      const currentWallets = await API.get('/api/provider_wallet/');
+      if (!currentWallets.data.success) {
+        showError(currentWallets.data.message);
+        return;
+      }
+      const list = currentWallets.data.data ?? [];
+      const results = await Promise.allSettled(
+        list.map((w) => API.post(`/api/provider_wallet/${w.id}/check`)),
+      );
+      const updated = [...list];
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value.data.success) {
+          updated[i] = r.value.data.data;
+        }
+      });
+      setWallets(updated);
+      showSuccess('余额已全部刷新');
+    } catch (e) {
+      showError(e.message);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -288,8 +316,8 @@ export default function ProviderWalletTable() {
           供应商管理
         </Title>
         <Space>
-          <Button icon={<IconRefresh />} onClick={fetchWallets} loading={loading}>
-            刷新
+          <Button icon={<IconRefresh />} onClick={refreshAllBalances} loading={refreshing}>
+            刷新余额
           </Button>
           <Button
             icon={<IconPlus />}
