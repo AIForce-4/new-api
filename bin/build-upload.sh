@@ -4,15 +4,13 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-PLATFORM="${PLATFORM:-linux/amd64}"
 HOST="${HOST:-154.26.180.195}"
 SSH_USER="${SSH_USER:-root}"
 REMOTE_PATH="${REMOTE_PATH:-/root}"
 IMAGE_NAME="${IMAGE_NAME:-new-api}"
 IMAGE_TAG="${IMAGE_TAG:-linux-amd64}"
-TAR_NAME="${TAR_NAME:-${IMAGE_NAME}-${IMAGE_TAG}.tar}"
 DOCKERFILE="${DOCKERFILE:-${ROOT_DIR}/Dockerfile}"
-CONTEXT_DIR="${CONTEXT_DIR:-${ROOT_DIR}}"
+BUILD_DIR="${ROOT_DIR}/tmp-build"
 IMAGE_REF="${IMAGE_NAME}:${IMAGE_TAG}"
 SCP_TARGET="${SSH_USER}@${HOST}:${REMOTE_PATH}/"
 
@@ -27,11 +25,6 @@ require_command docker
 require_command ssh
 require_command scp
 
-if ! docker buildx version >/dev/null 2>&1; then
-  echo "docker buildx 不可用" >&2
-  exit 1
-fi
-
 if ! docker info >/dev/null 2>&1; then
   echo "Docker daemon 不可用，请先启动 Docker" >&2
   exit 1
@@ -42,37 +35,65 @@ if [ ! -f "$DOCKERFILE" ]; then
   exit 1
 fi
 
-if [ ! -d "$CONTEXT_DIR" ]; then
-  echo "构建上下文目录不存在: $CONTEXT_DIR" >&2
-  exit 1
-fi
+# 清理临时目录
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
 
-echo "开始构建镜像: $IMAGE_REF"
-docker buildx build \
-  --platform "$PLATFORM" \
-  --tag "$IMAGE_REF" \
-  --load \
-  --file "$DOCKERFILE" \
-  "$CONTEXT_DIR"
+echo "==> 开始构建镜像 (原生 ARM + Go 交叉编译)"
+DOCKER_BUILDKIT=0 docker build \
+  --build-arg TARGETOS=linux \
+  --build-arg TARGETARCH=amd64 \
+  -t "$IMAGE_REF" \
+  -f "$DOCKERFILE" \
+  "$ROOT_DIR"
 
 if ! docker image inspect "$IMAGE_REF" >/dev/null 2>&1; then
-  echo "镜像未成功加载到本地: $IMAGE_REF" >&2
+  echo "镜像构建失败: $IMAGE_REF" >&2
   exit 1
 fi
 
-echo "开始导出镜像: $TAR_NAME"
-docker save -o "$TAR_NAME" "$IMAGE_REF"
+echo "==> 提取二进制文件"
+docker create --name temp-extract "$IMAGE_REF"
+docker cp temp-extract:/new-api "$BUILD_DIR/new-api"
+docker rm temp-extract
 
-if [ ! -s "$TAR_NAME" ]; then
-  echo "导出的 tar 文件为空: $TAR_NAME" >&2
+if [ ! -f "$BUILD_DIR/new-api" ]; then
+  echo "二进制文件提取失败" >&2
   exit 1
 fi
 
-echo "开始上传文件到: $SCP_TARGET"
-scp "$TAR_NAME" "$SCP_TARGET"
+# 检查二进制文件架构
+file "$BUILD_DIR/new-api"
 
-echo "完成"
-echo "镜像: $IMAGE_REF"
-echo "tar 文件: $TAR_NAME"
-echo "远端位置: ${REMOTE_PATH%/}/$(basename "$TAR_NAME")"
-echo "可在远端执行: bash ${REMOTE_PATH%/}/deploy.sh"
+echo "==> 创建服务器端 Dockerfile"
+cat > "$BUILD_DIR/Dockerfile" << 'EOF'
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates
+
+COPY new-api /new-api
+RUN chmod +x /new-api
+EXPOSE 3000
+WORKDIR /data
+ENTRYPOINT ["/new-api"]
+EOF
+
+echo "==> 打包构建文件"
+tar czf "$BUILD_DIR/new-api-build.tar.gz" -C "$BUILD_DIR" new-api Dockerfile
+
+if [ ! -s "$BUILD_DIR/new-api-build.tar.gz" ]; then
+  echo "打包失败" >&2
+  exit 1
+fi
+
+echo "==> 上传到服务器: $SCP_TARGET"
+echo "请输入服务器密码:"
+scp "$BUILD_DIR/new-api-build.tar.gz" "$SCP_TARGET"
+
+echo ""
+echo "==> 完成"
+echo "已上传: ${REMOTE_PATH}/new-api-build.tar.gz"
+echo "请在服务器执行: bash ${REMOTE_PATH}/deploy.sh"

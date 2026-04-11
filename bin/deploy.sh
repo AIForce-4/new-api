@@ -5,7 +5,8 @@ set -euo pipefail
 IMAGE_NAME="new-api"
 IMAGE_TAG="linux-amd64"
 CONTAINER_NAME="new-api"
-TAR_FILE="/root/new-api-linux-amd64.tar"
+BUILD_TAR="/root/new-api-build.tar.gz"
+BUILD_DIR="/root/new-api-build"
 DATA_DIR="/root/new-api-data"
 SESSION_SECRET="45c1956792262cb4b2742007cd137fec31205e8af0600525da71fbbac8693d30"
 
@@ -18,8 +19,13 @@ docker rm "$CONTAINER_NAME" 2>/dev/null || echo "容器不存在，跳过"
 echo "==> 删除旧镜像"
 docker rmi "${IMAGE_NAME}:${IMAGE_TAG}" 2>/dev/null || echo "镜像不存在，跳过"
 
-echo "==> 加载新镜像"
-docker load -i "$TAR_FILE"
+echo "==> 解压构建文件"
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+tar xzf "$BUILD_TAR" -C "$BUILD_DIR"
+
+echo "==> 构建镜像"
+docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" "$BUILD_DIR"
 
 echo "==> 启动新容器"
 docker run -d \
