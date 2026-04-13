@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Claude, OpenAI } from '../../helpers/lobeIcons';
+import { copy } from '../../helpers/utils';
 import MarkdownRenderer from '../common/markdown/MarkdownRenderer';
 import { INSTALL_GUIDES } from './installGuideData';
 
@@ -41,10 +42,10 @@ const renderRichText = (segments) =>
 
 const CopyableCodeBlock = ({ code, language = 'bash' }) => {
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
+    const success = await copy(code);
+    if (success) {
       Toast.success('已复制命令');
-    } catch {
+    } else {
       Toast.error('复制失败，请手动复制');
     }
   };
