@@ -16,6 +16,7 @@ import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
 
 import RechargeCard from './RechargeCard';
+// import InvitationCard from './InvitationCard';
 import TransferModal from './modals/TransferModal';
 import PaymentConfirmModal from './modals/PaymentConfirmModal';
 import TopupHistoryModal from './modals/TopupHistoryModal';
@@ -802,6 +803,15 @@ const TopUp = () => {
             reloadSubscriptionSelf={getSubscriptionSelf}
             onOpenContact={handleOpenContact}
           />
+
+          {/* <InvitationCard
+            t={t}
+            userState={userState}
+            renderQuota={renderQuota}
+            setOpenTransfer={setOpenTransfer}
+            affLink={affLink}
+            handleAffLinkClick={handleAffLinkClick}
+          /> */}
         </div>
       </div>
     </div>

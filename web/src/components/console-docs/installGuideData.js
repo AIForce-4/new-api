@@ -5,6 +5,7 @@ const INSTALL_GUIDE_ASSETS = {
   fingerImage: '/console-docs/install/finger-up.svg',
   supportQrCode: '/console-docs/install/support-wechat-qr.jpg',
   pricingContactQrCode: '/pricing-contact-qr.jpg',
+  apiKeyGuide: '/console-docs/install/apiKeyGuide.jpg',
   claudeWindowsStep01: '/console-docs/install/claude-code/windows-img-01.webp',
   claudeWindowsStep02: '/console-docs/install/claude-code/windows-img-02.webp',
   claudeWindowsStep03: '/console-docs/install/claude-code/windows-img-03.webp',
@@ -1082,6 +1083,15 @@ export const CLAUDE_CODE_INSTALL_GUIDE = {
                   src: INSTALL_GUIDE_ASSETS.claudeWindowsConfigure,
                   alt: 'Windows Claude Code 环境变量配置',
                 },
+                {
+                  type: 'paragraph',
+                  text: 'API密钥在图示位置获取：',
+                },
+                {
+                  type: 'image',
+                  src: INSTALL_GUIDE_ASSETS.apiKeyGuide,
+                  alt: 'API Key 配置说明',
+                },
               ],
             },
             {
@@ -1234,6 +1244,15 @@ export const CLAUDE_CODE_INSTALL_GUIDE = {
                   type: 'image',
                   src: '/console-docs/install/claude-code/macos-configure.webp',
                   alt: 'macOS Claude Code 配置环境变量',
+                },
+                {
+                  type: 'paragraph',
+                  text: 'API密钥在图示位置获取：',
+                },
+                {
+                  type: 'image',
+                  src: INSTALL_GUIDE_ASSETS.apiKeyGuide,
+                  alt: 'API Key 配置说明',
                 },
                 {
                   type: 'paragraph',
@@ -1691,6 +1710,15 @@ export const CODEX_INSTALL_GUIDE = {
                   src: INSTALL_GUIDE_ASSETS.codexWindowsConfigure,
                   alt: 'Windows Codex 配置文件修改',
                 },
+                {
+                  type: 'paragraph',
+                  text: 'API密钥在图示位置获取',
+                },
+                {
+                  type: 'image',
+                  src: INSTALL_GUIDE_ASSETS.apiKeyGuide,
+                  alt: 'API Key 配置说明',
+                },
               ],
             },
             {
@@ -1938,6 +1966,15 @@ export const CODEX_INSTALL_GUIDE = {
                   type: 'image',
                   src: '/console-docs/install/codex/macos-configure.webp',
                   alt: 'macOS Codex 配置文件',
+                },
+                {
+                  type: 'paragraph',
+                  text: 'API密钥在图示位置获取',
+                },
+                {
+                  type: 'image',
+                  src: INSTALL_GUIDE_ASSETS.apiKeyGuide,
+                  alt: 'API Key 配置说明',
                 },
               ],
             },
