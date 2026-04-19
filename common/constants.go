@@ -215,3 +215,9 @@ const (
 	TopUpStatusFailed  = "failed"
 	TopUpStatusExpired = "expired"
 )
+
+const (
+	PaymentMethodStripe = "stripe"
+	PaymentMethodCreem  = "creem"
+	PaymentMethodWaffo  = "waffo"
+)

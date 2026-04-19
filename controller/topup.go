@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/url"
 	"strconv"
 	"sync"
@@ -338,6 +339,24 @@ func EpayNotify(c *gin.Context) {
 		topUp := model.GetTopUpByTradeNo(verifyInfo.ServiceTradeNo)
 		if topUp == nil {
 			log.Printf("易支付回调未找到订单: %v", verifyInfo)
+			return
+		}
+		if topUp.PaymentMethod == common.PaymentMethodStripe ||
+			topUp.PaymentMethod == common.PaymentMethodCreem ||
+			topUp.PaymentMethod == common.PaymentMethodWaffo {
+			log.Printf("易支付回调订单支付方式不匹配: method=%s tradeNo=%s", topUp.PaymentMethod, topUp.TradeNo)
+			return
+		}
+		// 比对网关回调金额与本地订单金额，防止篡改
+		paidFloat, perr := strconv.ParseFloat(verifyInfo.Money, 64)
+		if perr != nil {
+			log.Printf("易支付回调金额解析失败: money=%q tradeNo=%s err=%v", verifyInfo.Money, topUp.TradeNo, perr)
+			return
+		}
+		paidCents := int64(math.Round(paidFloat * 100))
+		expectedCents := int64(math.Round(topUp.Money * 100))
+		if paidCents < expectedCents {
+			log.Printf("易支付回调金额不足: got %s, want %.2f, tradeNo=%s", verifyInfo.Money, topUp.Money, topUp.TradeNo)
 			return
 		}
 		if topUp.Status == "pending" {

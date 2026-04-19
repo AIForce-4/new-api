@@ -23,6 +23,8 @@ type TopUp struct {
 	Status           string  `json:"status"`
 }
 
+var ErrPaymentMethodMismatch = errors.New("payment method mismatch")
+
 func (topUp *TopUp) Insert() error {
 	var err error
 	err = DB.Create(topUp).Error
@@ -74,6 +76,10 @@ func Recharge(referenceId string, customerId string) (err error) {
 			return errors.New("充值订单不存在")
 		}
 
+		if topUp.PaymentMethod != common.PaymentMethodStripe {
+			return ErrPaymentMethodMismatch
+		}
+
 		if topUp.Status != common.TopUpStatusPending {
 			return errors.New("充值订单状态错误")
 		}
@@ -95,6 +101,10 @@ func Recharge(referenceId string, customerId string) (err error) {
 	})
 
 	if err != nil {
+		if errors.Is(err, ErrPaymentMethodMismatch) {
+			common.SysError(fmt.Sprintf("stripe webhook 拒收非 stripe 订单: method=%s tradeNo=%s", topUp.PaymentMethod, referenceId))
+			return err
+		}
 		common.SysError("topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
 	}
@@ -325,6 +335,10 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 			return errors.New("充值订单不存在")
 		}
 
+		if topUp.PaymentMethod != common.PaymentMethodCreem {
+			return ErrPaymentMethodMismatch
+		}
+
 		if topUp.Status != common.TopUpStatusPending {
 			return errors.New("充值订单状态错误")
 		}
@@ -368,6 +382,10 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 	})
 
 	if err != nil {
+		if errors.Is(err, ErrPaymentMethodMismatch) {
+			common.SysError(fmt.Sprintf("creem webhook 拒收非 creem 订单: method=%s tradeNo=%s", topUp.PaymentMethod, referenceId))
+			return err
+		}
 		common.SysError("creem topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
 	}
@@ -394,6 +412,10 @@ func RechargeWaffo(tradeNo string) (err error) {
 		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(refCol+" = ?", tradeNo).First(topUp).Error
 		if err != nil {
 			return errors.New("充值订单不存在")
+		}
+
+		if topUp.PaymentMethod != common.PaymentMethodWaffo {
+			return ErrPaymentMethodMismatch
 		}
 
 		if topUp.Status == common.TopUpStatusSuccess {
@@ -425,6 +447,10 @@ func RechargeWaffo(tradeNo string) (err error) {
 	})
 
 	if err != nil {
+		if errors.Is(err, ErrPaymentMethodMismatch) {
+			common.SysError(fmt.Sprintf("waffo webhook 拒收非 waffo 订单: method=%s tradeNo=%s", topUp.PaymentMethod, tradeNo))
+			return err
+		}
 		common.SysError("waffo topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
 	}

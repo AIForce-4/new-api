@@ -22,6 +22,7 @@ import (
 	"github.com/QuantumNous/new-api/relay"
 	"github.com/QuantumNous/new-api/router"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting"
 	_ "github.com/QuantumNous/new-api/setting/performance_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
@@ -275,6 +276,10 @@ func InitResources() error {
 
 	// Initialize options, should after model.InitDB()
 	model.InitOptionMap()
+
+	// Validate payment-channel configuration (force-disable channels that are
+	// enabled but missing webhook secrets — avoids empty-HMAC verification bypass).
+	setting.ValidatePaymentConfig()
 
 	// 清理旧的磁盘缓存文件
 	common.CleanupOldCacheFiles()

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
@@ -153,6 +155,12 @@ func StripeWebhook(c *gin.Context) {
 		return
 	}
 
+	if setting.StripeWebhookSecret == "" {
+		log.Println("Stripe Webhook 未配置 secret，拒绝处理")
+		c.AbortWithStatus(http.StatusServiceUnavailable)
+		return
+	}
+
 	signature := c.GetHeader("Stripe-Signature")
 	endpointSecret := setting.StripeWebhookSecret
 	event, err := webhook.ConstructEventWithOptions(payload, signature, endpointSecret, webhook.ConstructEventOptions{
@@ -162,6 +170,12 @@ func StripeWebhook(c *gin.Context) {
 	if err != nil {
 		log.Printf("Stripe Webhook验签失败: %v\n", err)
 		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if fresh, _ := service.MarkWebhookEventProcessed("stripe", event.ID, 24*time.Hour); !fresh {
+		log.Printf("Stripe 事件重放已忽略: %s", event.ID)
+		c.Status(http.StatusOK)
 		return
 	}
 
@@ -202,6 +216,24 @@ func sessionCompleted(event stripe.Event) {
 		return
 	}
 
+	amountCents, _ := strconv.ParseInt(event.GetObjectValue("amount_total"), 10, 64)
+	currency := strings.ToUpper(event.GetObjectValue("currency"))
+	topUp := model.GetTopUpByTradeNo(referenceId)
+	if topUp == nil {
+		log.Println("Stripe 充值订单不存在", referenceId)
+		return
+	}
+	expectedCents := int64(math.Round(topUp.Money * 100))
+	if amountCents < expectedCents {
+		log.Printf("Stripe 金额不足: got %d %s, want %d USD, tradeNo=%s",
+			amountCents, currency, expectedCents, referenceId)
+		return
+	}
+	if currency != "USD" {
+		log.Printf("Stripe 币种不一致: got %s, want USD, tradeNo=%s", currency, referenceId)
+		return
+	}
+
 	err := model.Recharge(referenceId, customerId)
 	if err != nil {
 		log.Println(err.Error(), referenceId)
@@ -209,7 +241,6 @@ func sessionCompleted(event stripe.Event) {
 	}
 
 	total, _ := strconv.ParseFloat(event.GetObjectValue("amount_total"), 64)
-	currency := strings.ToUpper(event.GetObjectValue("currency"))
 	log.Printf("收到款项：%s, %.2f(%s)", referenceId, total/100, currency)
 }
 
@@ -239,6 +270,11 @@ func sessionExpired(event stripe.Event) {
 	topUp := model.GetTopUpByTradeNo(referenceId)
 	if topUp == nil {
 		log.Println("充值订单不存在", referenceId)
+		return
+	}
+
+	if topUp.PaymentMethod != common.PaymentMethodStripe {
+		log.Printf("Stripe expired 回调订单支付方式不匹配: method=%s tradeNo=%s", topUp.PaymentMethod, referenceId)
 		return
 	}
 

@@ -10,10 +10,13 @@ import (
 	"fmt"
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
 	"io"
 	"log"
+	"math"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -108,12 +111,13 @@ func (*CreemAdaptor) RequestPay(c *gin.Context, req *CreemPayRequest) {
 
 	// 先创建订单记录，使用产品配置的金额和充值额度
 	topUp := &model.TopUp{
-		UserId:     id,
-		Amount:     selectedProduct.Quota, // 充值额度
-		Money:      selectedProduct.Price, // 支付金额
-		TradeNo:    referenceId,
-		CreateTime: time.Now().Unix(),
-		Status:     common.TopUpStatusPending,
+		UserId:        id,
+		Amount:        selectedProduct.Quota, // 充值额度
+		Money:         selectedProduct.Price, // 支付金额
+		TradeNo:       referenceId,
+		PaymentMethod: PaymentMethodCreem,
+		CreateTime:    time.Now().Unix(),
+		Status:        common.TopUpStatusPending,
 	}
 	err = topUp.Insert()
 	if err != nil {
@@ -272,6 +276,12 @@ func CreemWebhook(c *gin.Context) {
 
 	log.Printf("Creem Webhook解析成功 - EventType: %s, EventId: %s", webhookEvent.EventType, webhookEvent.Id)
 
+	if fresh, _ := service.MarkWebhookEventProcessed("creem", webhookEvent.Id, 24*time.Hour); !fresh {
+		log.Printf("Creem 事件重放已忽略: %s", webhookEvent.Id)
+		c.Status(http.StatusOK)
+		return
+	}
+
 	// 根据事件类型处理不同的webhook
 	switch webhookEvent.EventType {
 	case "checkout.completed":
@@ -337,6 +347,21 @@ func handleCheckoutCompleted(c *gin.Context, event *CreemWebhookEvent) {
 	if topUp.Status != common.TopUpStatusPending {
 		log.Printf("Creem充值订单状态错误: %s, 当前状态: %s", referenceId, topUp.Status)
 		c.Status(http.StatusOK) // 已处理过的订单，返回成功避免重复处理
+		return
+	}
+
+	// 金额/币种一致性校验：防止 webhook 上报的 AmountPaid 与本地订单不符
+	expectedCents := int64(math.Round(topUp.Money * 100))
+	if int64(event.Object.Order.AmountPaid) < expectedCents {
+		log.Printf("Creem 金额不足: got %d %s, want %d USD, tradeNo=%s",
+			event.Object.Order.AmountPaid, event.Object.Order.Currency, expectedCents, referenceId)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	if !strings.EqualFold(event.Object.Order.Currency, "USD") {
+		log.Printf("Creem 币种不一致: got %s, want USD, tradeNo=%s",
+			event.Object.Order.Currency, referenceId)
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -329,6 +331,13 @@ func WaffoWebhook(c *gin.Context) {
 		}
 		log.Printf("Waffo Webhook - EventType: %s, MerchantOrderId: %s, OrderStatus: %s",
 			event.EventType, payload.Result.MerchantOrderID, payload.Result.OrderStatus)
+		if payload.Result.MerchantOrderID != "" && payload.Result.OrderStatus == "PAY_SUCCESS" {
+			if fresh, _ := service.MarkWebhookEventProcessed("waffo", payload.Result.MerchantOrderID, 24*time.Hour); !fresh {
+				log.Printf("Waffo 事件重放已忽略: %s", payload.Result.MerchantOrderID)
+				sendWaffoWebhookResponse(c, wh, true, "")
+				return
+			}
+		}
 		handleWaffoPayment(c, wh, &payload.Result.PaymentNotificationResult)
 	default:
 		log.Printf("Waffo Webhook 未知事件: %s", event.EventType)
@@ -356,6 +365,42 @@ func handleWaffoPayment(c *gin.Context, wh *core.WebhookHandler, result *core.Pa
 
 	LockOrder(merchantOrderId)
 	defer UnlockOrder(merchantOrderId)
+
+	topUp := model.GetTopUpByTradeNo(merchantOrderId)
+	if topUp == nil {
+		log.Printf("Waffo 充值订单不存在: %s", merchantOrderId)
+		sendWaffoWebhookResponse(c, wh, false, "order not found")
+		return
+	}
+
+	if topUp.PaymentMethod != common.PaymentMethodWaffo {
+		log.Printf("Waffo 回调订单支付方式不匹配: method=%s tradeNo=%s", topUp.PaymentMethod, merchantOrderId)
+		sendWaffoWebhookResponse(c, wh, false, "payment method mismatch")
+		return
+	}
+
+	paidFloat, perr := strconv.ParseFloat(result.OrderAmount, 64)
+	if perr != nil {
+		log.Printf("Waffo 回调金额解析失败: amount=%q tradeNo=%s err=%v",
+			result.OrderAmount, merchantOrderId, perr)
+		sendWaffoWebhookResponse(c, wh, false, "invalid amount")
+		return
+	}
+	paidCents := int64(math.Round(paidFloat * 100))
+	expectedCents := int64(math.Round(topUp.Money * 100))
+	expectedCurrency := getWaffoCurrency()
+	if paidCents < expectedCents {
+		log.Printf("Waffo 金额不足: got %.2f %s, want %.2f %s, tradeNo=%s",
+			paidFloat, result.OrderCurrency, topUp.Money, expectedCurrency, merchantOrderId)
+		sendWaffoWebhookResponse(c, wh, false, "amount mismatch")
+		return
+	}
+	if !strings.EqualFold(result.OrderCurrency, expectedCurrency) {
+		log.Printf("Waffo 币种不一致: got %s, want %s, tradeNo=%s",
+			result.OrderCurrency, expectedCurrency, merchantOrderId)
+		sendWaffoWebhookResponse(c, wh, false, "currency mismatch")
+		return
+	}
 
 	if err := model.RechargeWaffo(merchantOrderId); err != nil {
 		log.Printf("Waffo 充值处理失败: %v, 订单: %s", err, merchantOrderId)
