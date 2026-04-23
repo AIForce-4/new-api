@@ -504,7 +504,7 @@ func postConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage 
 		other["image_generation_call"] = true
 		other["image_generation_call_price"] = imageGenerationCallPrice
 	}
-	if tieredResult != nil {
+	if tieredOk {
 		service.InjectTieredBillingInfo(other, relayInfo, tieredResult)
 	}
 	model.RecordConsumeLog(ctx, relayInfo.UserId, model.RecordConsumeLogParams{
