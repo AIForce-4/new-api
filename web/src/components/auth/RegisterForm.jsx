@@ -61,6 +61,7 @@ const RegisterForm = () => {
     email: '',
     verification_code: '',
     wechat_verification_code: '',
+    aff_code: '',
   });
   const { username, password, password2 } = inputs;
   const [userState, userDispatch] = useContext(UserContext);
@@ -220,13 +221,15 @@ const RegisterForm = () => {
       }
       setRegisterLoading(true);
       try {
-        if (!affCode) {
-          affCode = localStorage.getItem('aff');
-        }
-        inputs.aff_code = affCode;
+        const savedAffCode =
+          inputs.aff_code || affCode || localStorage.getItem('aff');
+        const registerInputs = {
+          ...inputs,
+          aff_code: savedAffCode || '',
+        };
         const res = await API.post(
           `/api/user/register?turnstile=${turnstileToken}`,
-          inputs,
+          registerInputs,
         );
         const { success, message } = res.data;
         if (success) {
@@ -625,6 +628,15 @@ const RegisterForm = () => {
                     />
                   </>
                 )}
+
+                <Form.Input
+                  field='aff_code'
+                  label={t('邀请码')}
+                  placeholder={t('请输入邀请码（选填）')}
+                  name='aff_code'
+                  onChange={(value) => handleChange('aff_code', value)}
+                  prefix={<IconKey />}
+                />
 
                 {(hasUserAgreement || hasPrivacyPolicy) && (
                   <div className='pt-4'>
