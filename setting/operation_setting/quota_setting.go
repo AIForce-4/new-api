@@ -3,12 +3,16 @@ package operation_setting
 import "github.com/QuantumNous/new-api/setting/config"
 
 type QuotaSetting struct {
-	EnableFreeModelPreConsume bool `json:"enable_free_model_pre_consume"` // 是否对免费模型启用预消耗
+	EnableFreeModelPreConsume bool    `json:"enable_free_model_pre_consume"` // 是否对免费模型启用预消耗
+	InviteRebateRate          float64 `json:"invite_rebate_rate"`
+	InviteRebateMaxRewardCap  float64 `json:"invite_rebate_max_reward_cap"`
 }
 
 // 默认配置
 var quotaSetting = QuotaSetting{
 	EnableFreeModelPreConsume: true,
+	InviteRebateRate:          5,
+	InviteRebateMaxRewardCap:  100,
 }
 
 func init() {

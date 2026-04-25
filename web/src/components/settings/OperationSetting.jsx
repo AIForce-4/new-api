@@ -18,6 +18,8 @@ const OperationSetting = () => {
     QuotaForInviter: 0,
     QuotaForInvitee: 0,
     'quota_setting.enable_free_model_pre_consume': true,
+    'quota_setting.invite_rebate_rate': 5,
+    'quota_setting.invite_rebate_max_reward_cap': 100,
 
     /* 通用设置 */
     TopUpLink: '',

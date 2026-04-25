@@ -125,6 +125,10 @@ export function getLucideIcon(key, selected = false) {
       return <BookOpen {...commonProps} color={iconColor} />;
     case 'topup':
       return <CreditCard {...commonProps} color={iconColor} />;
+    case 'inviteRebate':
+      return <Gift {...commonProps} color={iconColor} />;
+    case 'inviteRebateAdmin':
+      return <BadgeDollarSign {...commonProps} color={iconColor} />;
     case 'channel':
       return <Layers {...commonProps} color={iconColor} />;
     case 'redemption':

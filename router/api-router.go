@@ -82,6 +82,8 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.POST("/passkey/verify/finish", controller.PasskeyVerifyFinish)
 				selfRoute.DELETE("/passkey", controller.PasskeyDelete)
 				selfRoute.GET("/aff", controller.GetAffCode)
+				selfRoute.GET("/invite-rebate/users", controller.GetInviteRebateUsers)
+				selfRoute.GET("/invite-rebate/details", controller.GetInviteRebateDetails)
 				selfRoute.GET("/topup/info", controller.GetTopUpInfo)
 				selfRoute.GET("/topup/self", controller.GetUserTopUps)
 				selfRoute.POST("/topup", middleware.CriticalRateLimit(), controller.TopUp)
@@ -131,6 +133,13 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.GET("/2fa/stats", controller.Admin2FAStats)
 				adminRoute.DELETE("/:id/2fa", controller.AdminDisable2FA)
 			}
+		}
+
+		inviteRebateRoute := apiRouter.Group("/invite_rebate")
+		inviteRebateRoute.Use(middleware.AdminAuth())
+		{
+			inviteRebateRoute.GET("/", controller.GetAllInviteRebateRecords)
+			inviteRebateRoute.GET("/stat", controller.GetInviteRebateStats)
 		}
 
 		// Subscription billing (plans, purchase, admin management)

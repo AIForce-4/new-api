@@ -28,12 +28,14 @@ export const DEFAULT_ADMIN_CONFIG = {
   personal: {
     enabled: true,
     topup: true,
+    inviteRebate: true,
     personal: true,
   },
   admin: {
     enabled: true,
     channel: true,
     providerWallet: true,
+    inviteRebateAdmin: true,
     models: true,
     deployment: true,
     redemption: true,

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
-	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
@@ -359,26 +358,13 @@ func EpayNotify(c *gin.Context) {
 			log.Printf("易支付回调金额不足: got %s, want %.2f, tradeNo=%s", verifyInfo.Money, topUp.Money, topUp.TradeNo)
 			return
 		}
-		if topUp.Status == "pending" {
-			topUp.Status = "success"
-			err := topUp.Update()
-			if err != nil {
-				log.Printf("易支付回调更新订单失败: %v", topUp)
-				return
+			if topUp.Status == common.TopUpStatusPending {
+				if err := model.RechargeEpay(topUp.TradeNo); err != nil {
+					log.Printf("易支付回调更新订单失败: %v", err)
+					return
+				}
+				log.Printf("易支付回调更新用户成功 %v", topUp)
 			}
-			//user, _ := model.GetUserById(topUp.UserId, false)
-			//user.Quota += topUp.Amount * 500000
-			dAmount := decimal.NewFromInt(int64(topUp.Amount))
-			dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
-			quotaToAdd := int(dAmount.Mul(dQuotaPerUnit).IntPart())
-			err = model.IncreaseUserQuota(topUp.UserId, quotaToAdd, true)
-			if err != nil {
-				log.Printf("易支付回调更新用户失败: %v", topUp)
-				return
-			}
-			log.Printf("易支付回调更新用户成功 %v", topUp)
-			model.RecordLog(topUp.UserId, model.LogTypeTopup, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%f", logger.LogQuota(quotaToAdd), topUp.Money))
-		}
 	} else {
 		log.Printf("易支付异常回调: %v", verifyInfo)
 	}

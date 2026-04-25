@@ -22,6 +22,8 @@ import ProviderWallet from './pages/ProviderWallet';
 import Token from './pages/Token';
 import Redemption from './pages/Redemption';
 import TopUp from './pages/TopUp';
+import InviteRebate from './pages/InviteRebate';
+import InviteRebateAdmin from './pages/InviteRebateAdmin';
 import Log from './pages/Log';
 import Chat from './pages/Chat';
 import Chat2Link from './pages/Chat2Link';
@@ -112,6 +114,14 @@ function App() {
           element={
             <AdminRoute>
               <ProviderWallet />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/invite-rebate-admin'
+          element={
+            <AdminRoute>
+              <InviteRebateAdmin />
             </AdminRoute>
           }
         />
@@ -249,6 +259,16 @@ function App() {
             <PrivateRoute>
               <Suspense fallback={<Loading></Loading>} key={location.pathname}>
                 <TopUp />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/invite-rebate'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <InviteRebate />
               </Suspense>
             </PrivateRoute>
           }

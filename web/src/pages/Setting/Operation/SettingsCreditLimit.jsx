@@ -18,6 +18,8 @@ export default function SettingsCreditLimit(props) {
     QuotaForInviter: '',
     QuotaForInvitee: '',
     'quota_setting.enable_free_model_pre_consume': true,
+    'quota_setting.invite_rebate_rate': '',
+    'quota_setting.invite_rebate_max_reward_cap': '',
   });
   const refForm = useRef();
   const [inputsRow, setInputsRow] = useState(inputs);
@@ -143,6 +145,42 @@ export default function SettingsCreditLimit(props) {
                     setInputs({
                       ...inputs,
                       QuotaForInvitee: String(value),
+                    })
+                  }
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={6}>
+                <Form.InputNumber
+                  label={t('邀请返佣比例')}
+                  field={'quota_setting.invite_rebate_rate'}
+                  step={0.1}
+                  min={0}
+                  max={100}
+                  suffix={'%'}
+                  extraText={t('例如：5 表示 5%')}
+                  placeholder={t('例如：5')}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      'quota_setting.invite_rebate_rate': String(value),
+                    })
+                  }
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={6}>
+                <Form.InputNumber
+                  label={t('单用户返佣封顶金额')}
+                  field={'quota_setting.invite_rebate_max_reward_cap'}
+                  step={1}
+                  min={0}
+                  suffix={t('元')}
+                  extraText={t('每个被邀请用户最多贡献的返佣金额')}
+                  placeholder={t('例如：100')}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      'quota_setting.invite_rebate_max_reward_cap':
+                        String(value),
                     })
                   }
                 />

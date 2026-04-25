@@ -17,6 +17,8 @@ const routerMap = {
   token: '/console/token',
   redemption: '/console/redemption',
   topup: '/console/topup',
+  inviteRebate: '/console/invite-rebate',
+  inviteRebateAdmin: '/console/invite-rebate-admin',
   user: '/console/user',
   subscription: '/console/subscription',
   log: '/console/log',
@@ -88,11 +90,7 @@ const SiderBar = ({ onNavigate = () => {} }) => {
     });
 
     return filteredItems;
-  }, [
-    localStorage.getItem('enable_data_export'),
-    t,
-    isModuleVisible,
-  ]);
+  }, [localStorage.getItem('enable_data_export'), t, isModuleVisible]);
 
   const tutorialItems = useMemo(() => {
     const items = [
@@ -123,6 +121,11 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         itemKey: 'topup',
         to: '/topup',
       },
+      {
+        text: t('邀请返利'),
+        itemKey: 'inviteRebate',
+        to: '/invite-rebate',
+      },
     ];
 
     // 根据配置过滤项目
@@ -146,6 +149,12 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         text: t('供应商管理'),
         itemKey: 'providerWallet',
         to: '/provider-wallet',
+        className: isAdmin() ? '' : 'tableHiddle',
+      },
+      {
+        text: t('返佣统计'),
+        itemKey: 'inviteRebateAdmin',
+        to: '/invite-rebate-admin',
         className: isAdmin() ? '' : 'tableHiddle',
       },
       {
