@@ -97,6 +97,9 @@ func setupLogin(user *model.User, c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserSessionSaveFailed)
 		return
 	}
+	if err := model.RecordUserRecentIP(user.Id, model.UserRecentIPEventLogin, c.ClientIP()); err != nil {
+		common.SysLog(fmt.Sprintf("record login IP failed: %v", err))
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "",
 		"success": true,
@@ -167,14 +170,38 @@ func Register(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserExists)
 		return
 	}
+	duplicateRegisterIP, err := model.DuplicateRegisterIPDisablesInitialQuota(c.ClientIP())
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgDatabaseError)
+		common.SysLog(fmt.Sprintf("DuplicateRegisterIPDisablesInitialQuota error: %v", err))
+		return
+	}
 	affCode := user.AffCode // this code is the inviter's code, not the user's own code
 	inviterId, _ := model.GetUserIdByAffCode(affCode)
+	inviteAbnormal := false
+	if inviterId != 0 {
+		var err error
+		inviteAbnormal, err = model.RecentIPExists(c.ClientIP())
+		if err != nil {
+			common.ApiErrorI18n(c, i18n.MsgDatabaseError)
+			common.SysLog(fmt.Sprintf("RecentIPExists error: %v", err))
+			return
+		}
+	}
 	cleanUser := model.User{
 		Username:    user.Username,
 		Password:    user.Password,
 		DisplayName: user.Username,
 		InviterId:   inviterId,
 		Role:        common.RoleCommonUser, // 明确设置角色为普通用户
+		Quota:       common.QuotaForNewUser,
+	}
+	if inviteAbnormal {
+		cleanUser.InviteAbnormal = true
+		cleanUser.InviteAbnormalReason = model.InviteAbnormalReasonDuplicateRegistrationIP
+	}
+	if duplicateRegisterIP {
+		cleanUser.Quota = -1
 	}
 	if common.EmailVerificationEnabled {
 		cleanUser.Email = user.Email
@@ -189,6 +216,9 @@ func Register(c *gin.Context) {
 	if err := model.DB.Where("username = ?", cleanUser.Username).First(&insertedUser).Error; err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUserRegisterFailed)
 		return
+	}
+	if err := model.RecordUserRecentIP(insertedUser.Id, model.UserRecentIPEventRegister, c.ClientIP()); err != nil {
+		common.SysLog(fmt.Sprintf("record register IP failed: %v", err))
 	}
 	// 生成默认令牌
 	if constant.GenerateDefaultToken {

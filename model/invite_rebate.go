@@ -65,6 +65,8 @@ type InviteRebateUserItem struct {
 	CumulativeRechargeAmount float64                    `json:"cumulative_recharge_amount"`
 	CumulativeRewardAmount   float64                    `json:"cumulative_reward_amount"`
 	RewardProgress           InviteRebateRewardProgress `json:"reward_progress"`
+	InviteAbnormal           bool                       `json:"invite_abnormal"`
+	InviteTags               []string                   `json:"invite_tags"`
 }
 
 type InviteRebateDetailItem struct {
@@ -203,6 +205,10 @@ func GetInviteRebateUsers(inviterId int, pageInfo *common.PageInfo) ([]InviteReb
 	items := make([]InviteRebateUserItem, 0, len(users))
 	for _, user := range users {
 		agg := aggByUserId[user.Id]
+		inviteTags := []string{}
+		if user.InviteAbnormal {
+			inviteTags = append(inviteTags, "异常")
+		}
 		items = append(items, InviteRebateUserItem{
 			UserId:                   user.Id,
 			UserIdentifier:           maskInviteRebateUser(user),
@@ -211,6 +217,8 @@ func GetInviteRebateUsers(inviterId int, pageInfo *common.PageInfo) ([]InviteReb
 			CumulativeRechargeAmount: roundMoney(agg.TotalRecharge),
 			CumulativeRewardAmount:   roundMoney(agg.TotalReward),
 			RewardProgress:           buildInviteRebateProgressFromReward(agg.TotalReward),
+			InviteAbnormal:           user.InviteAbnormal,
+			InviteTags:               inviteTags,
 		})
 	}
 
@@ -302,6 +310,10 @@ func SettleInviteRebateForTopUpTx(tx *gorm.DB, topUp *TopUp) error {
 		rewardAmount = roundMoney(math.Min(rechargeAmount*rate, remainingReward))
 	}
 	settledAfter := roundMoney(settledBefore + rewardAmount)
+	if invitee.InviteAbnormal {
+		rewardAmount = 0
+		settledAfter = settledBefore
+	}
 	settledAt := topUp.CompleteTime
 	if settledAt == 0 {
 		settledAt = common.GetTimestamp()

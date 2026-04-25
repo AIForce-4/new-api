@@ -43,14 +43,16 @@ type User struct {
 	AffCode          string         `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
 	AffCount         int            `json:"aff_count" gorm:"type:int;default:0;column:aff_count"`
 	AffQuota         int            `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
-	AffHistoryQuota  int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
-	InviterId        int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
-	CreatedAt        int64          `json:"created_at" gorm:"bigint;index"`
-	DeletedAt        gorm.DeletedAt `gorm:"index"`
-	LinuxDOId        string         `json:"linux_do_id" gorm:"column:linux_do_id;index"`
-	Setting          string         `json:"setting" gorm:"type:text;column:setting"`
-	Remark           string         `json:"remark,omitempty" gorm:"type:varchar(255)" validate:"max=255"`
-	StripeCustomer   string         `json:"stripe_customer" gorm:"type:varchar(64);column:stripe_customer;index"`
+	AffHistoryQuota      int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
+	InviterId            int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	InviteAbnormal       bool           `json:"invite_abnormal" gorm:"column:invite_abnormal;index"`
+	InviteAbnormalReason string         `json:"invite_abnormal_reason" gorm:"type:varchar(64);column:invite_abnormal_reason"`
+	CreatedAt            int64          `json:"created_at" gorm:"bigint;index"`
+	DeletedAt            gorm.DeletedAt `gorm:"index"`
+	LinuxDOId            string         `json:"linux_do_id" gorm:"column:linux_do_id;index"`
+	Setting              string         `json:"setting" gorm:"type:text;column:setting"`
+	Remark               string         `json:"remark,omitempty" gorm:"type:varchar(255)" validate:"max=255"`
+	StripeCustomer       string         `json:"stripe_customer" gorm:"type:varchar(64);column:stripe_customer;index"`
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -385,7 +387,11 @@ func (user *User) Insert(inviterId int) error {
 			return err
 		}
 	}
-	user.Quota = common.QuotaForNewUser
+	if user.Quota < 0 {
+		user.Quota = 0
+	} else if user.Quota == 0 {
+		user.Quota = common.QuotaForNewUser
+	}
 	//user.SetAccessToken(common.GetUUID())
 	user.AffCode = common.GetRandomString(4)
 
@@ -420,8 +426,8 @@ func (user *User) Insert(inviterId int) error {
 		}
 	}
 
-	if common.QuotaForNewUser > 0 {
-		RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("新用户注册赠送 %s", logger.LogQuota(common.QuotaForNewUser)))
+	if user.Quota > 0 {
+		RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("新用户注册赠送 %s", logger.LogQuota(user.Quota)))
 	}
 	if inviterId != 0 {
 		if common.QuotaForInvitee > 0 {
@@ -448,7 +454,11 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 			return err
 		}
 	}
-	user.Quota = common.QuotaForNewUser
+	if user.Quota < 0 {
+		user.Quota = 0
+	} else if user.Quota == 0 {
+		user.Quota = common.QuotaForNewUser
+	}
 	user.AffCode = common.GetRandomString(4)
 	if user.CreatedAt == 0 {
 		user.CreatedAt = common.GetTimestamp()
@@ -484,8 +494,8 @@ func (user *User) FinalizeOAuthUserCreation(inviterId int) {
 		}
 	}
 
-	if common.QuotaForNewUser > 0 {
-		RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("新用户注册赠送 %s", logger.LogQuota(common.QuotaForNewUser)))
+	if user.Quota > 0 {
+		RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("新用户注册赠送 %s", logger.LogQuota(user.Quota)))
 	}
 	if inviterId != 0 {
 		if common.QuotaForInvitee > 0 {

@@ -4,11 +4,13 @@ import {
   Button,
   Card,
   Empty,
+  Image,
   Input,
   Modal,
   Progress,
   Spin,
   Table,
+  Tag,
   Typography,
 } from '@douyinfe/semi-ui';
 import { ArrowLeftRight, Copy, Wallet } from 'lucide-react';
@@ -175,6 +177,16 @@ const InviteRebate = () => {
     {
       title: t('用户标识'),
       dataIndex: 'user_identifier',
+      render: (value, record) => (
+        <div className='flex items-center gap-2'>
+          <span>{value}</span>
+          {record.invite_tags?.map((tag) => (
+            <Tag key={tag} color='red'>
+              {t(tag)}
+            </Tag>
+          ))}
+        </div>
+      ),
     },
     {
       title: t('邀请时间'),
@@ -263,7 +275,18 @@ const InviteRebate = () => {
           cancelButtonProps={{ style: { display: 'none' } }}
           centered
         >
-          <Text>{t('提现/转账需由客服协助完成，请联系客服处理。')}</Text>
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <Text>{t('提现申请需联系客服人工处理，请扫码添加客服并备注提现账号信息。')}</Text>
+            <Image
+              width={220}
+              src='/pricing-contact-qr.jpg'
+              alt={t('客服二维码')}
+              preview={false}
+            />
+            <Text type='secondary'>
+              {t('如二维码无法识别，请联系平台客服获取提现协助。')}
+            </Text>
+          </div>
         </Modal>
 
         <Spin spinning={loading}>

@@ -20,6 +20,8 @@ const OperationSetting = () => {
     'quota_setting.enable_free_model_pre_consume': true,
     'quota_setting.invite_rebate_rate': 5,
     'quota_setting.invite_rebate_max_reward_cap': 100,
+    'quota_setting.recent_ip_limit': 0,
+    'quota_setting.disable_initial_quota_on_duplicate_register_ip': false,
 
     /* 通用设置 */
     TopUpLink: '',

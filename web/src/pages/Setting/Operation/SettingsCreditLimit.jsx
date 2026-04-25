@@ -20,6 +20,8 @@ export default function SettingsCreditLimit(props) {
     'quota_setting.enable_free_model_pre_consume': true,
     'quota_setting.invite_rebate_rate': '',
     'quota_setting.invite_rebate_max_reward_cap': '',
+    'quota_setting.recent_ip_limit': '',
+    'quota_setting.disable_initial_quota_on_duplicate_register_ip': false,
   });
   const refForm = useRef();
   const [inputsRow, setInputsRow] = useState(inputs);
@@ -185,8 +187,43 @@ export default function SettingsCreditLimit(props) {
                   }
                 />
               </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={6}>
+                <Form.InputNumber
+                  label={t('最近 IP 采集次数')}
+                  field={'quota_setting.recent_ip_limit'}
+                  step={1}
+                  min={0}
+                  suffix={t('次')}
+                  extraText={t('采集最近几次登录/注册 IP，0 表示不采集')}
+                  placeholder={t('例如：3')}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      'quota_setting.recent_ip_limit': String(value),
+                    })
+                  }
+                />
+              </Col>
             </Row>
             <Row>
+              <Col>
+                <Form.Switch
+                  label={t('重复注册 IP 不赠送新用户初始额度')}
+                  field={
+                    'quota_setting.disable_initial_quota_on_duplicate_register_ip'
+                  }
+                  extraText={t(
+                    '开启后，新用户注册 IP 已存在时，不分配新用户初始额度',
+                  )}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      'quota_setting.disable_initial_quota_on_duplicate_register_ip':
+                        value,
+                    })
+                  }
+                />
+              </Col>
               <Col>
                 <Form.Switch
                   label={t('对免费模型启用预消耗')}

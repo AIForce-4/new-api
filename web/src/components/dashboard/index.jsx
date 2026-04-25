@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Modal } from '@douyinfe/semi-ui';
+import { Alert, Modal } from '@douyinfe/semi-ui';
 import { getRelativeTime } from '../../helpers';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
@@ -127,13 +127,14 @@ const Dashboard = () => {
       return;
     }
 
-    const storageKey = `console-group-promo-shown-${userState.user.id}`;
-    if (localStorage.getItem(storageKey)) {
+    const storageKey = `console-group-promo-last-shown-${userState.user.id}`;
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem(storageKey) === today) {
       return;
     }
 
     setGroupPromoVisible(true);
-    localStorage.setItem(storageKey, '1');
+    localStorage.setItem(storageKey, today);
   }, [userState?.user?.id]);
 
   return (
@@ -143,14 +144,18 @@ const Dashboard = () => {
         className='group-promo-dialog'
         footer={null}
         onCancel={() => setGroupPromoVisible(false)}
-        title='加入用户群，立送 8 元额度'
+        title='系统公告'
         visible={groupPromoVisible}
         width={720}
         bodyStyle={{ overflowY: 'visible' }}
       >
         <div className='group-promo-modal'>
-          <div className='group-promo-modal__badge'>限时福利</div>
-          <div className='group-promo-modal__title'>扫码加入 aif4 客户群，联系客服即可领取 8 元额度</div>
+          <Alert
+            showIcon={false}
+            type='warning'
+            title='⚠️ 地区限制提示'
+            description='依据相关法律法规，本平台拒绝向中国大陆地区用户提供服务。如您位于中国大陆，请立即停止使用。※ 继续使用即表示您确认自身不位于受限地区，并自愿承担由此产生的一切法律后果。'
+          />
           <div className='group-promo-modal__desc'>
             群内可获取使用交流、答疑支持和最新活动通知。二维码 7 天内有效，失效后重新进入控制台会自动刷新。
           </div>

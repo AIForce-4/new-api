@@ -234,6 +234,10 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 	if !common.RegisterEnabled {
 		return nil, &OAuthRegistrationDisabledError{}
 	}
+	duplicateRegisterIP, err := model.DuplicateRegisterIPDisablesInitialQuota(c.ClientIP())
+	if err != nil {
+		return nil, err
+	}
 
 	// Set up new user
 	user.Username = provider.GetProviderPrefix() + strconv.Itoa(model.GetMaxUserId()+1)
@@ -259,12 +263,29 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 	}
 	user.Role = common.RoleCommonUser
 	user.Status = common.UserStatusEnabled
+	user.Quota = common.QuotaForNewUser
+	if duplicateRegisterIP {
+		user.Quota = -1
+	}
 
 	// Handle affiliate code
 	affCode := session.Get("aff")
 	inviterId := 0
+	inviteAbnormal := false
 	if affCode != nil {
 		inviterId, _ = model.GetUserIdByAffCode(affCode.(string))
+		if inviterId != 0 {
+			var err error
+			inviteAbnormal, err = model.RecentIPExists(c.ClientIP())
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	user.InviterId = inviterId
+	if inviteAbnormal {
+		user.InviteAbnormal = true
+		user.InviteAbnormalReason = model.InviteAbnormalReasonDuplicateRegistrationIP
 	}
 
 	// Use transaction to ensure user creation and OAuth binding are atomic
@@ -294,6 +315,9 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 
 		// Perform post-transaction tasks (logs, sidebar config, inviter rewards)
 		user.FinalizeOAuthUserCreation(inviterId)
+		if err := model.RecordUserRecentIP(user.Id, model.UserRecentIPEventRegister, c.ClientIP()); err != nil {
+			common.SysLog(fmt.Sprintf("record register IP failed: %v", err))
+		}
 	} else {
 		// Built-in provider: create user and update provider ID in a transaction
 		err := model.DB.Transaction(func(tx *gorm.DB) error {
@@ -323,6 +347,9 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 
 		// Perform post-transaction tasks
 		user.FinalizeOAuthUserCreation(inviterId)
+		if err := model.RecordUserRecentIP(user.Id, model.UserRecentIPEventRegister, c.ClientIP()); err != nil {
+			common.SysLog(fmt.Sprintf("record register IP failed: %v", err))
+		}
 	}
 
 	return user, nil

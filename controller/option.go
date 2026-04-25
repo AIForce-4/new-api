@@ -279,6 +279,15 @@ func UpdateOption(c *gin.Context) {
 			})
 			return
 		}
+	case "quota_setting.recent_ip_limit":
+		value, err := strconv.Atoi(option.Value.(string))
+		if err != nil || value < 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "最近 IP 采集次数必须大于等于 0",
+			})
+			return
+		}
 	case "console_setting.api_info":
 		err = console_setting.ValidateConsoleSettings(option.Value.(string), "ApiInfo")
 		if err != nil {
