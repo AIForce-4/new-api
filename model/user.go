@@ -376,6 +376,10 @@ func (user *User) TransferAffQuotaToQuota(quota int) error {
 		return err
 	}
 
+	if err := RecordInviteRebateTransferTx(tx, user.Id, quota); err != nil {
+		return err
+	}
+
 	// 提交事务
 	return tx.Commit().Error
 }

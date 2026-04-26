@@ -141,9 +141,13 @@ func getFirstRechargeDiscount(user *model.User) firstRechargeDiscountResult {
 		discount = 100
 	}
 	eligible := user != nil && !user.FirstRechargeDiscountUsed && discount < 100
+	rate := 1.0
+	if eligible {
+		rate = float64(discount) / 100
+	}
 	return firstRechargeDiscountResult{
 		Discount: discount,
-		Rate:     float64(discount) / 100,
+		Rate:     rate,
 		Eligible: eligible,
 		Applied:  eligible,
 	}

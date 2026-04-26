@@ -22,6 +22,7 @@ const OperationSetting = () => {
     'quota_setting.invite_rebate_max_reward_cap': 100,
     'quota_setting.recent_ip_limit': 0,
     'quota_setting.disable_initial_quota_on_duplicate_register_ip': false,
+    'quota_setting.first_recharge_discount': 100,
 
     /* 通用设置 */
     TopUpLink: '',

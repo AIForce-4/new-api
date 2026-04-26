@@ -54,6 +54,12 @@ const RegisterForm = () => {
     redirecting: '正在跳转 GitHub...',
     timeout: '请求超时，请刷新页面后重新发起 GitHub 登录',
   };
+  let affCode = new URLSearchParams(window.location.search).get('aff');
+  if (affCode) {
+    localStorage.setItem('aff', affCode);
+  }
+  const initialAffCode = affCode || localStorage.getItem('aff') || '';
+
   const [inputs, setInputs] = useState({
     username: '',
     password: '',
@@ -61,7 +67,7 @@ const RegisterForm = () => {
     email: '',
     verification_code: '',
     wechat_verification_code: '',
-    aff_code: '',
+    aff_code: initialAffCode,
   });
   const { username, password, password2 } = inputs;
   const [userState, userDispatch] = useContext(UserContext);
@@ -103,11 +109,6 @@ const RegisterForm = () => {
   const formPrimaryButtonClassName =
     'auth-page-shell__primary-button w-full !rounded-full transition-colors';
   const linkClassName = 'auth-page-shell__link mx-1 font-medium';
-
-  let affCode = new URLSearchParams(window.location.search).get('aff');
-  if (affCode) {
-    localStorage.setItem('aff', affCode);
-  }
 
   const status = useMemo(() => {
     if (statusState?.status) return statusState.status;
@@ -634,6 +635,7 @@ const RegisterForm = () => {
                   label={t('邀请码')}
                   placeholder={t('请输入邀请码（选填）')}
                   name='aff_code'
+                  initValue={initialAffCode}
                   onChange={(value) => handleChange('aff_code', value)}
                   prefix={<IconKey />}
                 />

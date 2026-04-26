@@ -23,6 +23,7 @@ import {
   showSuccess,
   timestamp2string,
 } from '../../helpers';
+import { displayAmountToQuota, quotaToDisplayAmount } from '../../helpers/quota';
 import { UserContext } from '../../context/User';
 import TransferModal from '../topup/modals/TransferModal';
 
@@ -91,18 +92,24 @@ const InviteRebate = () => {
   };
 
   const transfer = async () => {
-    if (transferAmount < getQuotaPerUnit()) {
+    const transferQuota = displayAmountToQuota(transferAmount);
+    if (transferQuota < getQuotaPerUnit()) {
       showError(t('划转金额最低为') + ' ' + renderQuota(getQuotaPerUnit()));
       return;
     }
+    if (transferQuota > availableReward) {
+      showError(t('邀请额度不足'));
+      return;
+    }
     const res = await API.post('/api/user/aff_transfer', {
-      quota: transferAmount,
+      quota: transferQuota,
     });
     const { success, message } = res.data;
     if (success) {
       showSuccess(message);
       setOpenTransfer(false);
       await getUserInfo();
+      await loadRewardDetails(rewardDetailsPage);
     } else {
       showError(message);
     }
@@ -162,7 +169,7 @@ const InviteRebate = () => {
 
   useEffect(() => {
     loadInviteData();
-    setTransferAmount(getQuotaPerUnit());
+    setTransferAmount(quotaToDisplayAmount(getQuotaPerUnit()));
   }, []);
 
   useEffect(() => {
@@ -232,22 +239,49 @@ const InviteRebate = () => {
       render: renderTime,
     },
     {
-      title: t('被邀请用户'),
+      title: t('奖励类型'),
+      dataIndex: 'type',
+      render: (type) => {
+        const isWithdrawal = type === 'withdrawal';
+        const isTransfer = type === 'transfer';
+        return (
+          <Tag color={isWithdrawal ? 'orange' : isTransfer ? 'blue' : 'green'}>
+            {t(isWithdrawal ? '返佣提现' : isTransfer ? '返佣划转' : '返佣奖励')}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: t('来源/说明'),
       dataIndex: 'invited_user_identifier',
+      render: (value, record) => {
+        if (record.type === 'withdrawal' || record.type === 'transfer') {
+          return record.remark || t(record.type === 'transfer' ? '转入钱包' : '返佣提现');
+        }
+        return value || '-';
+      },
     },
     {
       title: t('充值金额'),
       dataIndex: 'recharge_amount',
       align: 'right',
-      render: renderMoney,
+      render: (value, record) =>
+        record.type === 'withdrawal' || record.type === 'transfer'
+          ? '-'
+          : renderMoney(value),
     },
     {
       title: t('奖励金额'),
       dataIndex: 'reward_amount',
       align: 'right',
-      render: (value) => (
-        <Text style={{ color: '#d87350' }}>{renderMoney(value)}</Text>
-      ),
+      render: (value, record) => {
+        const isOutgoing = record.type === 'withdrawal' || record.type === 'transfer';
+        return (
+          <Text style={{ color: isOutgoing ? '#d64d4d' : '#d87350' }}>
+            {isOutgoing ? `- ${renderMoney(value)}` : renderMoney(value)}
+          </Text>
+        );
+      },
     },
   ];
 

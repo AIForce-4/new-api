@@ -4,13 +4,22 @@ import {
   Card,
   Empty,
   Input,
+  InputNumber,
+  Modal,
   Space,
   Table,
   Typography,
 } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
-import { API, showError, timestamp2string } from '../../../helpers';
+import {
+  API,
+  renderQuota,
+  showError,
+  showSuccess,
+  timestamp2string,
+} from '../../../helpers';
+import { displayAmountToQuota } from '../../../helpers/quota';
 
 const { Text, Title } = Typography;
 const pageSize = 10;
@@ -29,6 +38,12 @@ const InviteRebateAdminTable = () => {
     unique_inviter_count: 0,
     unique_invitee_count: 0,
   });
+  const [withdrawVisible, setWithdrawVisible] = useState(false);
+  const [withdrawUsername, setWithdrawUsername] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState(0);
+  const [withdrawUser, setWithdrawUser] = useState(null);
+  const [withdrawQueryLoading, setWithdrawQueryLoading] = useState(false);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   const renderMoney = (value) => `¥ ${Number(value || 0).toFixed(2)}`;
 
@@ -80,6 +95,69 @@ const InviteRebateAdminTable = () => {
       loadRecords(1);
     } else {
       setPage(1);
+    }
+  };
+
+  const resetWithdrawModal = () => {
+    setWithdrawUsername('');
+    setWithdrawAmount(0);
+    setWithdrawUser(null);
+  };
+
+  const closeWithdrawModal = () => {
+    setWithdrawVisible(false);
+    resetWithdrawModal();
+  };
+
+  const queryWithdrawUser = async () => {
+    const username = withdrawUsername.trim();
+    if (!username) {
+      showError(t('请输入用户名'));
+      return;
+    }
+    setWithdrawQueryLoading(true);
+    try {
+      const res = await API.get(
+        `/api/invite_rebate/user?username=${encodeURIComponent(username)}`,
+      );
+      const { success, message, data } = res.data;
+      if (success) {
+        setWithdrawUser(data);
+      } else {
+        setWithdrawUser(null);
+        showError(message);
+      }
+    } finally {
+      setWithdrawQueryLoading(false);
+    }
+  };
+
+  const withdrawRebate = async () => {
+    if (!withdrawUser) {
+      showError(t('请先查询用户'));
+      return;
+    }
+    const quota = displayAmountToQuota(withdrawAmount);
+    if (!quota || quota <= 0) {
+      showError(t('请输入提现金额'));
+      return;
+    }
+    setWithdrawLoading(true);
+    try {
+      const res = await API.post('/api/invite_rebate/withdraw', {
+        username: withdrawUser.username,
+        quota,
+      });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess(t('提现成功'));
+        closeWithdrawModal();
+        await Promise.all([loadSummary(), loadRecords(page)]);
+      } else {
+        showError(message);
+      }
+    } finally {
+      setWithdrawLoading(false);
     }
   };
 
@@ -191,6 +269,9 @@ const InviteRebateAdminTable = () => {
           <Button type='primary' onClick={handleSearch}>
             {t('搜索')}
           </Button>
+          <Button theme='solid' type='warning' onClick={() => setWithdrawVisible(true)}>
+            {t('返佣提现')}
+          </Button>
         </Space>
         <Table
           columns={columns}
@@ -205,6 +286,75 @@ const InviteRebateAdminTable = () => {
           empty={<Empty title={t('暂无数据')} />}
         />
       </Card>
+
+      <Modal
+        title={t('返佣提现')}
+        visible={withdrawVisible}
+        onCancel={closeWithdrawModal}
+        onOk={withdrawRebate}
+        confirmLoading={withdrawLoading}
+        okText={t('确认提现')}
+        cancelText={t('取消')}
+      >
+        <div className='space-y-4'>
+          <Space align='end'>
+            <Input
+              label={t('用户名')}
+              placeholder={t('请输入用户名')}
+              value={withdrawUsername}
+              onChange={(value) => {
+                setWithdrawUsername(value);
+                setWithdrawUser(null);
+              }}
+              onEnterPress={queryWithdrawUser}
+              style={{ width: 260 }}
+            />
+            <Button loading={withdrawQueryLoading} onClick={queryWithdrawUser}>
+              {t('查询用户')}
+            </Button>
+          </Space>
+
+          {withdrawUser && (
+            <Card className='!rounded-xl' bodyStyle={{ padding: 16 }}>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <Text type='secondary'>{t('用户名')}</Text>
+                  <div className='font-semibold'>{withdrawUser.username}</div>
+                </div>
+                <div>
+                  <Text type='secondary'>{t('显示名称')}</Text>
+                  <div className='font-semibold'>{withdrawUser.display_name || '-'}</div>
+                </div>
+                <div>
+                  <Text type='secondary'>{t('当前可用返佣额度')}</Text>
+                  <div className='font-semibold text-[#d87350]'>
+                    {renderQuota(withdrawUser.aff_quota || 0)}
+                  </div>
+                </div>
+                <div>
+                  <Text type='secondary'>{t('累计返佣')}</Text>
+                  <div className='font-semibold'>
+                    {renderQuota(withdrawUser.aff_history_quota || 0)}
+                  </div>
+                </div>
+                <div>
+                  <Text type='secondary'>{t('邀请人数')}</Text>
+                  <div className='font-semibold'>{withdrawUser.aff_count || 0}</div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <InputNumber
+            label={t('提现金额')}
+            placeholder={t('请输入提现金额')}
+            min={0}
+            value={withdrawAmount}
+            onChange={setWithdrawAmount}
+            style={{ width: '100%' }}
+          />
+        </div>
+      </Modal>
     </div>
   );
 };

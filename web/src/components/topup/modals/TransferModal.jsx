@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Typography, Input, InputNumber } from '@douyinfe/semi-ui';
 import { CreditCard } from 'lucide-react';
+import { quotaToDisplayAmount } from '../../../helpers/quota';
 
 const TransferModal = ({
   t,
@@ -13,6 +14,9 @@ const TransferModal = ({
   transferAmount,
   setTransferAmount,
 }) => {
+  const minTransferAmount = quotaToDisplayAmount(getQuotaPerUnit());
+  const maxTransferAmount = quotaToDisplayAmount(userState?.user?.aff_quota || 0);
+
   return (
     <Modal
       title={
@@ -40,11 +44,12 @@ const TransferModal = ({
         </div>
         <div>
           <Typography.Text strong className='block mb-2'>
-            {t('划转额度')} · {t('最低') + renderQuota(getQuotaPerUnit())}
+            {t('划转金额')} · {t('最低') + renderQuota(getQuotaPerUnit())}
           </Typography.Text>
           <InputNumber
-            min={getQuotaPerUnit()}
-            max={userState?.user?.aff_quota || 0}
+            min={minTransferAmount}
+            max={maxTransferAmount}
+            step={0.01}
             value={transferAmount}
             onChange={(value) => setTransferAmount(value)}
             className='w-full !rounded-lg'

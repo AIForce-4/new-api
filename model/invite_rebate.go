@@ -1,14 +1,23 @@
 package model
 
 import (
+	"database/sql"
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"gorm.io/gorm"
+)
+
+const (
+	InviteRebateRecordTypeReward     = "reward"
+	InviteRebateRecordTypeWithdrawal = "withdrawal"
+	InviteRebateRecordTypeTransfer   = "transfer"
 )
 
 type InviteRebateRecord struct {
@@ -25,6 +34,9 @@ type InviteRebateRecord struct {
 	SettledBefore  float64 `json:"settled_before"`
 	SettledAfter   float64 `json:"settled_after"`
 	SettledAt      int64   `json:"settled_at" gorm:"index"`
+	RecordType     string  `json:"type" gorm:"type:varchar(32);column:record_type;index"`
+	OperatorId     int     `json:"operator_id" gorm:"index"`
+	Remark         string  `json:"remark" gorm:"type:varchar(255)"`
 }
 
 type InviteRebateStats struct {
@@ -49,6 +61,8 @@ type InviteRebateRecordView struct {
 	RebateRate      float64 `json:"rebate_rate"`
 	RewardCap       float64 `json:"reward_cap"`
 	SettledAt       int64   `json:"settled_at"`
+	Type            string  `json:"type"`
+	Remark          string  `json:"remark"`
 }
 
 type InviteRebateRewardProgress struct {
@@ -77,6 +91,18 @@ type InviteRebateDetailItem struct {
 	InvitedUserIdentifier string  `json:"invited_user_identifier"`
 	RechargeAmount        float64 `json:"recharge_amount"`
 	RewardAmount          float64 `json:"reward_amount"`
+	Type                  string  `json:"type"`
+	Remark                string  `json:"remark"`
+	OperatorUsername      string  `json:"operator_username,omitempty"`
+}
+
+type InviteRebateUserBalance struct {
+	Id              int    `json:"id"`
+	Username        string `json:"username"`
+	DisplayName     string `json:"display_name"`
+	AffQuota        int    `json:"aff_quota"`
+	AffHistoryQuota int    `json:"aff_history_quota"`
+	AffCount        int    `json:"aff_count"`
 }
 
 type inviteRebateRecordAgg struct {
@@ -140,6 +166,8 @@ func GetAllInviteRebateRecords(keyword string, pageInfo *common.PageInfo) ([]Inv
 			RebateRate:      roundMoney(record.RebateRate),
 			RewardCap:       roundMoney(record.RewardCap),
 			SettledAt:       record.SettledAt,
+			Type:            inviteRebateRecordType(record),
+			Remark:          record.Remark,
 		})
 	}
 
@@ -148,19 +176,20 @@ func GetAllInviteRebateRecords(keyword string, pageInfo *common.PageInfo) ([]Inv
 
 func GetInviteRebateStats() (*InviteRebateStats, error) {
 	stats := &InviteRebateStats{}
-	if err := DB.Model(&InviteRebateRecord{}).Count(&stats.TotalRecords).Error; err != nil {
+	rewardQuery := DB.Model(&InviteRebateRecord{}).Where("record_type = ? OR record_type = ?", InviteRebateRecordTypeReward, "")
+	if err := rewardQuery.Count(&stats.TotalRecords).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Model(&InviteRebateRecord{}).Select("COALESCE(SUM(recharge_amount), 0)").Scan(&stats.TotalRechargeAmount).Error; err != nil {
+	if err := DB.Model(&InviteRebateRecord{}).Where("record_type = ? OR record_type = ?", InviteRebateRecordTypeReward, "").Select("COALESCE(SUM(recharge_amount), 0)").Scan(&stats.TotalRechargeAmount).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Model(&InviteRebateRecord{}).Select("COALESCE(SUM(reward_amount), 0)").Scan(&stats.TotalRewardAmount).Error; err != nil {
+	if err := DB.Model(&InviteRebateRecord{}).Where("record_type = ? OR record_type = ?", InviteRebateRecordTypeReward, "").Select("COALESCE(SUM(reward_amount), 0)").Scan(&stats.TotalRewardAmount).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Model(&InviteRebateRecord{}).Distinct("inviter_id").Count(&stats.UniqueInviterCount).Error; err != nil {
+	if err := DB.Model(&InviteRebateRecord{}).Where("record_type = ? OR record_type = ?", InviteRebateRecordTypeReward, "").Distinct("inviter_id").Count(&stats.UniqueInviterCount).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Model(&InviteRebateRecord{}).Distinct("invitee_id").Count(&stats.UniqueInviteeCount).Error; err != nil {
+	if err := DB.Model(&InviteRebateRecord{}).Where("record_type = ? OR record_type = ?", InviteRebateRecordTypeReward, "").Distinct("invitee_id").Count(&stats.UniqueInviteeCount).Error; err != nil {
 		return nil, err
 	}
 	stats.TotalRechargeAmount = roundMoney(stats.TotalRechargeAmount)
@@ -241,33 +270,133 @@ func GetInviteRebateDetails(inviterId int, pageInfo *common.PageInfo) ([]InviteR
 	}
 
 	inviteeIds := make([]int, 0, len(records))
+	operatorIds := make([]int, 0, len(records))
 	for _, record := range records {
-		inviteeIds = append(inviteeIds, record.InviteeId)
+		if record.InviteeId > 0 {
+			inviteeIds = append(inviteeIds, record.InviteeId)
+		}
+		if record.OperatorId > 0 {
+			operatorIds = append(operatorIds, record.OperatorId)
+		}
 	}
 
-	var users []User
-	if err := DB.Where("id IN ?", inviteeIds).Find(&users).Error; err != nil {
-		return nil, 0, err
+	userById := map[int]User{}
+	if len(inviteeIds) > 0 {
+		var users []User
+		if err := DB.Where("id IN ?", inviteeIds).Find(&users).Error; err != nil {
+			return nil, 0, err
+		}
+		for _, user := range users {
+			userById[user.Id] = user
+		}
 	}
-	userById := make(map[int]User, len(users))
-	for _, user := range users {
-		userById[user.Id] = user
+
+	operatorById := map[int]User{}
+	if len(operatorIds) > 0 {
+		var operators []User
+		if err := DB.Where("id IN ?", operatorIds).Find(&operators).Error; err != nil {
+			return nil, 0, err
+		}
+		for _, user := range operators {
+			operatorById[user.Id] = user
+		}
 	}
 
 	items := make([]InviteRebateDetailItem, 0, len(records))
 	for _, record := range records {
-		items = append(items, InviteRebateDetailItem{
-			TopupId:               record.TopupId,
-			TradeNo:               record.TradeNo,
-			Time:                  record.SettledAt,
-			InvitedUserId:         record.InviteeId,
-			InvitedUserIdentifier: maskInviteRebateUser(userById[record.InviteeId]),
-			RechargeAmount:        roundMoney(record.RechargeAmount),
-			RewardAmount:          roundMoney(record.RewardAmount),
-		})
+		item := InviteRebateDetailItem{
+			TopupId:        record.TopupId,
+			TradeNo:        record.TradeNo,
+			Time:           record.SettledAt,
+			RechargeAmount: roundMoney(record.RechargeAmount),
+			RewardAmount:   roundMoney(record.RewardAmount),
+			Type:           inviteRebateRecordType(record),
+			Remark:         record.Remark,
+		}
+		if record.InviteeId > 0 {
+			item.InvitedUserId = record.InviteeId
+			item.InvitedUserIdentifier = maskInviteRebateUser(userById[record.InviteeId])
+		}
+		if record.OperatorId > 0 {
+			item.OperatorUsername = inviteRebateUserName(operatorById[record.OperatorId])
+		}
+		items = append(items, item)
 	}
 
 	return items, total, nil
+}
+
+func GetInviteRebateUserByUsername(username string) (*InviteRebateUserBalance, error) {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return nil, errors.New("用户名不能为空")
+	}
+	var user User
+	if err := DB.Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("用户不存在")
+		}
+		return nil, err
+	}
+	return &InviteRebateUserBalance{
+		Id:              user.Id,
+		Username:        user.Username,
+		DisplayName:     user.DisplayName,
+		AffQuota:        user.AffQuota,
+		AffHistoryQuota: user.AffHistoryQuota,
+		AffCount:        user.AffCount,
+	}, nil
+}
+
+func WithdrawInviteRebate(username string, quota int, operatorId int) error {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return errors.New("用户名不能为空")
+	}
+	if quota <= 0 {
+		return errors.New("提现金额必须大于 0")
+	}
+
+	var target User
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("username = ?", username).First(&target).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("用户不存在")
+			}
+			return err
+		}
+		if target.AffQuota < quota {
+			return errors.New("返佣余额不足")
+		}
+
+		target.AffQuota -= quota
+		if err := tx.Model(&User{}).Where("id = ?", target.Id).Update("aff_quota", target.AffQuota).Error; err != nil {
+			return err
+		}
+
+		amount := roundMoney(float64(quota) / common.QuotaPerUnit)
+		topupId, err := nextInviteRebateSpecialTopupIdTx(tx, target.Id, InviteRebateRecordTypeWithdrawal)
+		if err != nil {
+			return err
+		}
+		record := InviteRebateRecord{
+			InviterId:     target.Id,
+			TopupId:       topupId,
+			PaymentMethod: InviteRebateRecordTypeWithdrawal,
+			RewardAmount:  amount,
+			SettledAt:     common.GetTimestamp(),
+			RecordType:    InviteRebateRecordTypeWithdrawal,
+			OperatorId:    operatorId,
+			Remark:        "返佣提现",
+		}
+		return tx.Create(&record).Error
+	})
+	if err != nil {
+		return err
+	}
+
+	RecordLog(target.Id, LogTypeManage, fmt.Sprintf("管理员处理返佣提现，扣减返佣额度：%s", logger.LogQuota(quota)))
+	return nil
 }
 
 func SettleInviteRebateForTopUpTx(tx *gorm.DB, topUp *TopUp) error {
@@ -332,6 +461,7 @@ func SettleInviteRebateForTopUpTx(tx *gorm.DB, topUp *TopUp) error {
 		SettledBefore:  settledBefore,
 		SettledAfter:   settledAfter,
 		SettledAt:      settledAt,
+		RecordType:     InviteRebateRecordTypeReward,
 	}
 	if err := tx.Create(&record).Error; err != nil {
 		return err
@@ -390,6 +520,48 @@ func maskInviteRebateUser(user User) string {
 		return "***"
 	}
 	return string(runes[0]) + strings.Repeat("*", len(runes)-1)
+}
+
+func inviteRebateRecordType(record InviteRebateRecord) string {
+	if record.RecordType != "" {
+		return record.RecordType
+	}
+	return InviteRebateRecordTypeReward
+}
+
+func nextInviteRebateSpecialTopupIdTx(tx *gorm.DB, userId int, recordType string) (int, error) {
+	var minTopupId sql.NullInt64
+	if err := tx.Model(&InviteRebateRecord{}).
+		Where("inviter_id = ? AND record_type IN ?", userId, []string{InviteRebateRecordTypeWithdrawal, InviteRebateRecordTypeTransfer}).
+		Select("COALESCE(MIN(topup_id), 0)").
+		Scan(&minTopupId).Error; err != nil {
+		return 0, err
+	}
+	next := minTopupId.Int64 - 1
+	if next >= 0 {
+		next = -1
+	}
+	return int(next), nil
+}
+
+func RecordInviteRebateTransferTx(tx *gorm.DB, userId int, quota int) error {
+	if quota <= 0 {
+		return errors.New("划转金额必须大于 0")
+	}
+	topupId, err := nextInviteRebateSpecialTopupIdTx(tx, userId, InviteRebateRecordTypeTransfer)
+	if err != nil {
+		return err
+	}
+	record := InviteRebateRecord{
+		InviterId:     userId,
+		TopupId:       topupId,
+		PaymentMethod: InviteRebateRecordTypeTransfer,
+		RewardAmount:  roundMoney(float64(quota) / common.QuotaPerUnit),
+		SettledAt:     common.GetTimestamp(),
+		RecordType:    InviteRebateRecordTypeTransfer,
+		Remark:        "转入钱包",
+	}
+	return tx.Create(&record).Error
 }
 
 func inviteRebateUserName(user User) string {

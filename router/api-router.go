@@ -140,6 +140,8 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			inviteRebateRoute.GET("/", controller.GetAllInviteRebateRecords)
 			inviteRebateRoute.GET("/stat", controller.GetInviteRebateStats)
+			inviteRebateRoute.GET("/user", controller.GetInviteRebateUserByUsername)
+			inviteRebateRoute.POST("/withdraw", controller.WithdrawInviteRebate)
 		}
 
 		// Subscription billing (plans, purchase, admin management)
