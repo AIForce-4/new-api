@@ -54,12 +54,13 @@ func (*StripeAdaptor) RequestAmount(c *gin.Context, req *StripePayRequest) {
 		return
 	}
 	id := c.GetInt("id")
-	group, err := model.GetUserGroup(id, true)
+	user, err := model.GetUserById(id, false)
 	if err != nil {
-		c.JSON(200, gin.H{"message": "error", "data": "获取用户分组失败"})
+		c.JSON(200, gin.H{"message": "error", "data": "用户不存在"})
 		return
 	}
-	payMoney := getStripePayMoney(float64(req.Amount), group)
+	payDiscount := getFirstRechargeDiscount(user)
+	payMoney := getStripePayMoney(float64(req.Amount), user.Group, payDiscount.Rate)
 	if payMoney <= 0.01 {
 		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
 		return
@@ -92,13 +93,29 @@ func (*StripeAdaptor) RequestPay(c *gin.Context, req *StripePayRequest) {
 	}
 
 	id := c.GetInt("id")
-	user, _ := model.GetUserById(id, false)
-	chargedMoney := GetChargedAmount(float64(req.Amount), *user)
+	user, err := model.GetUserById(id, false)
+	if err != nil || user == nil {
+		c.JSON(200, gin.H{"message": "error", "data": "用户不存在"})
+		return
+	}
+	payDiscount := getFirstRechargeDiscount(user)
+	if payDiscount.Applied {
+		hasPendingDiscountOrder, err := model.HasPendingFirstRechargeDiscountTopUp(id)
+		if err != nil {
+			c.JSON(200, gin.H{"message": "error", "data": "检查首充优惠订单失败"})
+			return
+		}
+		if hasPendingDiscountOrder {
+			c.JSON(200, gin.H{"message": "error", "data": "已有待支付的首充优惠订单，请先完成支付或等待订单失效"})
+			return
+		}
+	}
+	chargedMoney := getStripePayMoney(float64(req.Amount), user.Group, payDiscount.Rate)
 
 	reference := fmt.Sprintf("new-api-ref-%d-%d-%s", user.Id, time.Now().UnixMilli(), randstr.String(4))
 	referenceId := "ref_" + common.Sha1([]byte(reference))
 
-	payLink, err := genStripeLink(referenceId, user.StripeCustomer, user.Email, req.Amount, req.SuccessURL, req.CancelURL)
+	payLink, err := genStripeLink(referenceId, user.StripeCustomer, user.Email, chargedMoney, req.SuccessURL, req.CancelURL)
 	if err != nil {
 		log.Println("获取Stripe Checkout支付链接失败", err)
 		c.JSON(200, gin.H{"message": "error", "data": "拉起支付失败"})
@@ -106,13 +123,14 @@ func (*StripeAdaptor) RequestPay(c *gin.Context, req *StripePayRequest) {
 	}
 
 	topUp := &model.TopUp{
-		UserId:        id,
-		Amount:        req.Amount,
-		Money:         chargedMoney,
-		TradeNo:       referenceId,
-		PaymentMethod: PaymentMethodStripe,
-		CreateTime:    time.Now().Unix(),
-		Status:        common.TopUpStatusPending,
+		UserId:                       id,
+		Amount:                       req.Amount,
+		Money:                        chargedMoney,
+		TradeNo:                      referenceId,
+		PaymentMethod:                PaymentMethodStripe,
+		CreateTime:                   time.Now().Unix(),
+		Status:                       common.TopUpStatusPending,
+		FirstRechargeDiscountApplied: payDiscount.Applied,
 	}
 	err = topUp.Insert()
 	if err != nil {
@@ -304,7 +322,7 @@ func sessionExpired(event stripe.Event) {
 //   - cancelURL: custom URL to redirect when payment is canceled (empty for default)
 //
 // Returns the checkout session URL or an error if the session creation fails.
-func genStripeLink(referenceId string, customerId string, email string, amount int64, successURL string, cancelURL string) (string, error) {
+func genStripeLink(referenceId string, customerId string, email string, payMoney float64, successURL string, cancelURL string) (string, error) {
 	if !strings.HasPrefix(setting.StripeApiSecret, "sk_") && !strings.HasPrefix(setting.StripeApiSecret, "rk_") {
 		return "", fmt.Errorf("无效的Stripe API密钥")
 	}
@@ -325,8 +343,14 @@ func genStripeLink(referenceId string, customerId string, email string, amount i
 		CancelURL:         stripe.String(cancelURL),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
-				Price:    stripe.String(setting.StripePriceId),
-				Quantity: stripe.Int64(amount),
+				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+					Currency: stripe.String("usd"),
+					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+						Name: stripe.String("Wallet recharge"),
+					},
+					UnitAmount: stripe.Int64(int64(math.Round(payMoney * 100))),
+				},
+				Quantity: stripe.Int64(1),
 			},
 		},
 		Mode:                stripe.String(string(stripe.CheckoutSessionModePayment)),
@@ -360,7 +384,7 @@ func GetChargedAmount(count float64, user model.User) float64 {
 	return count * topUpGroupRatio
 }
 
-func getStripePayMoney(amount float64, group string) float64 {
+func getStripePayMoney(amount float64, group string, firstRechargeDiscountRate float64) float64 {
 	originalAmount := amount
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
 		amount = amount / common.QuotaPerUnit
@@ -376,6 +400,9 @@ func getStripePayMoney(amount float64, group string) float64 {
 		if ds > 0 {
 			discount = ds
 		}
+	}
+	if firstRechargeDiscountRate > 0 && firstRechargeDiscountRate < 1 {
+		discount *= firstRechargeDiscountRate
 	}
 	payMoney := amount * setting.StripeUnitPrice * topupGroupRatio * discount
 	return payMoney

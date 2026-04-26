@@ -8,6 +8,7 @@ type QuotaSetting struct {
 	InviteRebateMaxRewardCap                  float64 `json:"invite_rebate_max_reward_cap"`
 	RecentIPLimit                             int     `json:"recent_ip_limit"`
 	DisableInitialQuotaOnDuplicateRegisterIP bool    `json:"disable_initial_quota_on_duplicate_register_ip"`
+	FirstRechargeDiscount                     int     `json:"first_recharge_discount"`
 }
 
 // 默认配置
@@ -15,6 +16,7 @@ var quotaSetting = QuotaSetting{
 	EnableFreeModelPreConsume: true,
 	InviteRebateRate:          5,
 	InviteRebateMaxRewardCap:  100,
+	FirstRechargeDiscount:     100,
 }
 
 func init() {

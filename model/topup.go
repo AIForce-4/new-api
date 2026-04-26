@@ -12,15 +12,16 @@ import (
 )
 
 type TopUp struct {
-	Id               int     `json:"id"`
-	UserId           int     `json:"user_id" gorm:"index"`
-	Amount           int64   `json:"amount"`
-	Money            float64 `json:"money"`
-	TradeNo          string  `json:"trade_no" gorm:"unique;type:varchar(255);index"`
-	PaymentMethod    string  `json:"payment_method" gorm:"type:varchar(50)"`
-	CreateTime       int64   `json:"create_time"`
-	CompleteTime     int64   `json:"complete_time"`
-	Status           string  `json:"status"`
+	Id                           int     `json:"id"`
+	UserId                       int     `json:"user_id" gorm:"index"`
+	Amount                       int64   `json:"amount"`
+	Money                        float64 `json:"money"`
+	TradeNo                      string  `json:"trade_no" gorm:"unique;type:varchar(255);index"`
+	PaymentMethod                string  `json:"payment_method" gorm:"type:varchar(50)"`
+	CreateTime                   int64   `json:"create_time"`
+	CompleteTime                 int64   `json:"complete_time"`
+	Status                       string  `json:"status"`
+	FirstRechargeDiscountApplied bool    `json:"first_recharge_discount_applied" gorm:"default:false;column:first_recharge_discount_applied"`
 }
 
 var ErrPaymentMethodMismatch = errors.New("payment method mismatch")
@@ -35,6 +36,14 @@ func (topUp *TopUp) Update() error {
 	var err error
 	err = DB.Save(topUp).Error
 	return err
+}
+
+func HasPendingFirstRechargeDiscountTopUp(userId int) (bool, error) {
+	var count int64
+	err := DB.Model(&TopUp{}).
+		Where("user_id = ? AND status = ? AND first_recharge_discount_applied = ?", userId, common.TopUpStatusPending, true).
+		Count(&count).Error
+	return count > 0, err
 }
 
 func GetTopUpById(id int) *TopUp {
@@ -55,6 +64,12 @@ func GetTopUpByTradeNo(tradeNo string) *TopUp {
 		return nil
 	}
 	return topUp
+}
+
+func applyFirstRechargeDiscountUsedTx(topUp *TopUp, updates map[string]interface{}) {
+	if topUp.FirstRechargeDiscountApplied {
+		updates["first_recharge_discount_used"] = true
+	}
 }
 
 func Recharge(referenceId string, customerId string) (err error) {
@@ -92,7 +107,9 @@ func Recharge(referenceId string, customerId string) (err error) {
 		}
 
 		quota = topUp.Money * common.QuotaPerUnit
-		err = tx.Model(&User{}).Where("id = ?", topUp.UserId).Updates(map[string]interface{}{"stripe_customer": customerId, "quota": gorm.Expr("quota + ?", quota)}).Error
+		updates := map[string]interface{}{"stripe_customer": customerId, "quota": gorm.Expr("quota + ?", quota)}
+		applyFirstRechargeDiscountUsedTx(topUp, updates)
+		err = tx.Model(&User{}).Where("id = ?", topUp.UserId).Updates(updates).Error
 		if err != nil {
 			return err
 		}
@@ -303,7 +320,9 @@ func ManualCompleteTopUp(tradeNo string) error {
 		}
 
 		// 增加用户额度（立即写库，保持一致性）
-		if err := tx.Model(&User{}).Where("id = ?", topUp.UserId).Update("quota", gorm.Expr("quota + ?", quotaToAdd)).Error; err != nil {
+		updates := map[string]interface{}{"quota": gorm.Expr("quota + ?", quotaToAdd)}
+		applyFirstRechargeDiscountUsedTx(topUp, updates)
+		if err := tx.Model(&User{}).Where("id = ?", topUp.UserId).Updates(updates).Error; err != nil {
 			return err
 		}
 
@@ -365,7 +384,9 @@ func RechargeEpay(tradeNo string) error {
 		if err := tx.Save(topUp).Error; err != nil {
 			return err
 		}
-		if err := tx.Model(&User{}).Where("id = ?", topUp.UserId).Update("quota", gorm.Expr("quota + ?", quotaToAdd)).Error; err != nil {
+		updates := map[string]interface{}{"quota": gorm.Expr("quota + ?", quotaToAdd)}
+		applyFirstRechargeDiscountUsedTx(topUp, updates)
+		if err := tx.Model(&User{}).Where("id = ?", topUp.UserId).Updates(updates).Error; err != nil {
 			return err
 		}
 		return SettleInviteRebateForTopUpTx(tx, topUp)
@@ -511,7 +532,9 @@ func RechargeWaffo(tradeNo string) (err error) {
 			return err
 		}
 
-		if err := tx.Model(&User{}).Where("id = ?", topUp.UserId).Update("quota", gorm.Expr("quota + ?", quotaToAdd)).Error; err != nil {
+		updates := map[string]interface{}{"quota": gorm.Expr("quota + ?", quotaToAdd)}
+		applyFirstRechargeDiscountUsedTx(topUp, updates)
+		if err := tx.Model(&User{}).Where("id = ?", topUp.UserId).Updates(updates).Error; err != nil {
 			return err
 		}
 

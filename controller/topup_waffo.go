@@ -76,7 +76,7 @@ func formatWaffoAmount(amount float64, currency string) string {
 // getWaffoPayMoney converts the user-facing amount to USD for Waffo payment.
 // Waffo only accepts USD, so this function handles the conversion from different
 // display types (USD/CNY/TOKENS) to the actual USD amount to charge.
-func getWaffoPayMoney(amount float64, group string) float64 {
+func getWaffoPayMoney(amount float64, group string, firstRechargeDiscountRate float64) float64 {
 	originalAmount := amount
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
 		amount = amount / common.QuotaPerUnit
@@ -90,6 +90,9 @@ func getWaffoPayMoney(amount float64, group string) float64 {
 		if ds > 0 {
 			discount = ds
 		}
+	}
+	if firstRechargeDiscountRate > 0 && firstRechargeDiscountRate < 1 {
+		discount *= firstRechargeDiscountRate
 	}
 	return amount * setting.WaffoUnitPrice * topupGroupRatio * discount
 }
@@ -158,8 +161,20 @@ func RequestWaffoPay(c *gin.Context) {
 	}
 	// resolvedPayMethodType/Name 为空时，Waffo 自动选择支付方式
 
+	payDiscount := getFirstRechargeDiscount(user)
+	if payDiscount.Applied {
+		hasPendingDiscountOrder, err := model.HasPendingFirstRechargeDiscountTopUp(id)
+		if err != nil {
+			c.JSON(200, gin.H{"message": "error", "data": "检查首充优惠订单失败"})
+			return
+		}
+		if hasPendingDiscountOrder {
+			c.JSON(200, gin.H{"message": "error", "data": "已有待支付的首充优惠订单，请先完成支付或等待订单失效"})
+			return
+		}
+	}
 	group, _ := model.GetUserGroup(id, true)
-	payMoney := getWaffoPayMoney(float64(req.Amount), group)
+	payMoney := getWaffoPayMoney(float64(req.Amount), group, payDiscount.Rate)
 	if payMoney < 0.01 {
 		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
 		return
@@ -180,13 +195,14 @@ func RequestWaffoPay(c *gin.Context) {
 
 	// 创建本地订单
 	topUp := &model.TopUp{
-		UserId:        id,
-		Amount:        amount,
-		Money:         payMoney,
-		TradeNo:       merchantOrderId,
-		PaymentMethod: "waffo",
-		CreateTime:    time.Now().Unix(),
-		Status:        common.TopUpStatusPending,
+		UserId:                       id,
+		Amount:                       amount,
+		Money:                        payMoney,
+		TradeNo:                      merchantOrderId,
+		PaymentMethod:                "waffo",
+		CreateTime:                   time.Now().Unix(),
+		Status:                       common.TopUpStatusPending,
+		FirstRechargeDiscountApplied: payDiscount.Applied,
 	}
 	if err := topUp.Insert(); err != nil {
 		log.Printf("Waffo 创建本地订单失败: %v", err)

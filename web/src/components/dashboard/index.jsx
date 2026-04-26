@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Alert, Modal } from '@douyinfe/semi-ui';
+import { Modal } from '@douyinfe/semi-ui';
 import { getRelativeTime } from '../../helpers';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
@@ -144,24 +144,34 @@ const Dashboard = () => {
         className='group-promo-dialog'
         footer={null}
         onCancel={() => setGroupPromoVisible(false)}
-        title='系统公告'
         visible={groupPromoVisible}
-        width={720}
+        width={920}
         bodyStyle={{ overflowY: 'visible' }}
       >
         <div className='group-promo-modal'>
-          <Alert
-            showIcon={false}
-            type='warning'
-            title='⚠️ 地区限制提示'
-            description='依据相关法律法规，本平台拒绝向中国大陆地区用户提供服务。如您位于中国大陆，请立即停止使用。※ 继续使用即表示您确认自身不位于受限地区，并自愿承担由此产生的一切法律后果。'
-          />
-          <div className='group-promo-modal__desc'>
-            群内可获取使用交流、答疑支持和最新活动通知。二维码 7 天内有效，失效后重新进入控制台会自动刷新。
+          <div className='group-promo-modal__header'>
+            <div className='group-promo-modal__badge'>系统公告</div>
           </div>
-          <div className='group-promo-modal__images'>
-            <img src='/pricing-contact-qr.jpg' alt='aif4 客服二维码' className='group-promo-modal__image' />
-            <img src='/qunPic.jpg' alt='aif4 客户群二维码' className='group-promo-modal__image' />
+          <div className='group-promo-modal__warning'>
+            <div className='group-promo-modal__warning-title'>⚠️ 地区限制提示</div>
+            <div className='group-promo-modal__warning-text'>
+              依据相关法律法规，本平台拒绝向中国大陆地区用户提供服务。如您位于中国大陆，请立即停止使用。
+            </div>
+            <div className='group-promo-modal__warning-text'>
+              ※ 继续使用即表示您确认自身不位于受限地区，并自愿承担由此产生的一切法律后果。
+            </div>
+          </div>
+          <div className='group-promo-modal__cards'>
+            <div className='group-promo-modal__card'>
+              <div className='group-promo-modal__card-title'>平台客服</div>
+              <div className='group-promo-modal__card-desc'>扫码添加客服，获取提现协助与使用支持</div>
+              <img src='/pricing-contact-qr.jpg' alt='aif4 客服二维码' className='group-promo-modal__image' />
+            </div>
+            <div className='group-promo-modal__card'>
+              <div className='group-promo-modal__card-title'>用户群</div>
+              <div className='group-promo-modal__card-desc'>扫码加入用户群，接收交流答疑与活动通知</div>
+              <img src='/qunPic.jpg' alt='aif4 客户群二维码' className='group-promo-modal__image' />
+            </div>
           </div>
         </div>
       </Modal>

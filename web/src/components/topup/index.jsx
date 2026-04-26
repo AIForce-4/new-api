@@ -372,6 +372,9 @@ const TopUp = () => {
         setTopupInfo({
           amount_options: data.amount_options || [],
           discount: data.discount || {},
+          first_recharge_discount: data.first_recharge_discount || 100,
+          first_recharge_discount_eligible:
+            data.first_recharge_discount_eligible || false,
         });
 
         // 处理支付方式
@@ -636,14 +639,10 @@ const TopUp = () => {
   };
 
   // 选择预设充值额度
-  const selectPresetAmount = (preset) => {
+  const selectPresetAmount = async (preset) => {
     setTopUpCount(preset.value);
     setSelectedPreset(preset.value);
-
-    // 计算实际支付金额，考虑折扣
-    const discount = preset.discount || topupInfo.discount[preset.value] || 1.0;
-    const discountedAmount = preset.value * priceRatio * discount;
-    setAmount(discountedAmount);
+    await getAmount(preset.value);
   };
 
   // 格式化大数字显示
@@ -690,6 +689,10 @@ const TopUp = () => {
           payMethods={payMethods}
           amountNumber={amount}
           discountRate={topupInfo?.discount?.[topUpCount] || 1.0}
+          firstRechargeDiscount={topupInfo?.first_recharge_discount || 100}
+          firstRechargeDiscountEligible={
+            topupInfo?.first_recharge_discount_eligible || false
+          }
         />
 
         {/* 充值账单模态框 */}

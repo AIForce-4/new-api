@@ -17,6 +17,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/QuantumNous/new-api/constant"
 
@@ -435,6 +436,11 @@ func GetSelf(c *gin.Context) {
 
 	// 获取用户设置并提取sidebar_modules
 	userSetting := user.GetSetting()
+	firstRechargeDiscount := operation_setting.GetQuotaSetting().FirstRechargeDiscount
+	if firstRechargeDiscount <= 0 || firstRechargeDiscount > 100 {
+		firstRechargeDiscount = 100
+	}
+	firstRechargeDiscountEligible := !user.FirstRechargeDiscountUsed && firstRechargeDiscount < 100
 
 	// 构建响应数据，包含用户信息和权限
 	responseData := map[string]interface{}{
@@ -460,8 +466,11 @@ func GetSelf(c *gin.Context) {
 		"inviter_id":        user.InviterId,
 		"linux_do_id":       user.LinuxDOId,
 		"setting":           user.Setting,
-		"stripe_customer":   user.StripeCustomer,
-		"sidebar_modules":   userSetting.SidebarModules, // 正确提取sidebar_modules字段
+		"stripe_customer":                  user.StripeCustomer,
+		"first_recharge_discount_used":     user.FirstRechargeDiscountUsed,
+		"first_recharge_discount":          firstRechargeDiscount,
+		"first_recharge_discount_eligible": firstRechargeDiscountEligible,
+		"sidebar_modules":                  userSetting.SidebarModules, // 正确提取sidebar_modules字段
 		"permissions":       permissions,                // 新增权限字段
 	}
 

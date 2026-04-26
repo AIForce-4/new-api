@@ -20,9 +20,13 @@ const PaymentConfirmModal = ({
   // 新增：用于显示折扣明细
   amountNumber,
   discountRate,
+  firstRechargeDiscount,
+  firstRechargeDiscountEligible,
 }) => {
   const hasDiscount =
     discountRate && discountRate > 0 && discountRate < 1 && amountNumber > 0;
+  const hasFirstRechargeDiscount =
+    firstRechargeDiscountEligible && Number(firstRechargeDiscount) < 100;
   const originalAmount = hasDiscount ? amountNumber / discountRate : 0;
   const discountAmount = hasDiscount ? originalAmount - amountNumber : 0;
   return (
@@ -69,6 +73,11 @@ const PaymentConfirmModal = ({
                     </Text>
                   )}
                 </div>
+              )}
+              {hasFirstRechargeDiscount && !amountLoading && (
+                <Text size='small' type='success'>
+                  {t('已包含首充优惠')}
+                </Text>
               )}
             </div>
             {hasDiscount && !amountLoading && (

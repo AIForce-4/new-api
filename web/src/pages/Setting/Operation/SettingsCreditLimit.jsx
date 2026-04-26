@@ -21,6 +21,7 @@ export default function SettingsCreditLimit(props) {
     'quota_setting.invite_rebate_rate': '',
     'quota_setting.invite_rebate_max_reward_cap': '',
     'quota_setting.recent_ip_limit': '',
+    'quota_setting.first_recharge_discount': '100',
     'quota_setting.disable_initial_quota_on_duplicate_register_ip': false,
   });
   const refForm = useRef();
@@ -200,6 +201,24 @@ export default function SettingsCreditLimit(props) {
                     setInputs({
                       ...inputs,
                       'quota_setting.recent_ip_limit': String(value),
+                    })
+                  }
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={6}>
+                <Form.InputNumber
+                  label={t('首充优惠折扣')}
+                  field={'quota_setting.first_recharge_discount'}
+                  step={1}
+                  min={1}
+                  max={100}
+                  suffix={'%'}
+                  extraText={t('85 表示充值 100 仅需支付 85，100 表示不启用')}
+                  placeholder={t('例如：85')}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      'quota_setting.first_recharge_discount': String(value),
                     })
                   }
                 />

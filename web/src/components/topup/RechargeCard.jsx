@@ -84,6 +84,9 @@ const RechargeCard = ({
   const [activeTab, setActiveTab] = useState('topup');
   const shouldShowSubscription =
     !subscriptionLoading && subscriptionPlans.length > 0;
+  const firstRechargeDiscount = Number(topupInfo?.first_recharge_discount || 100);
+  const showFirstRechargeDiscount =
+    topupInfo?.first_recharge_discount_eligible && firstRechargeDiscount < 100;
 
   useEffect(() => {
     if (initialTabSetRef.current) return;
@@ -210,6 +213,22 @@ const RechargeCard = ({
             initValues={{ topUpCount: topUpCount }}
           >
             <div className='space-y-6'>
+              {showFirstRechargeDiscount && (
+                <Banner
+                  type='success'
+                  closeIcon={null}
+                  className='!rounded-xl'
+                  description={
+                    <span>
+                      {t('首充优惠：当前首笔充值享')}
+                      {(firstRechargeDiscount / 10).toFixed(1)}
+                      {t('折，充值 100 仅需支付')}
+                      {firstRechargeDiscount}
+                      {t('。')}
+                    </span>
+                  }
+                />
+              )}
               {(enableOnlineTopUp || enableStripeTopUp) && (
                 <Row gutter={12}>
                   <Col xs={24} sm={24} md={24} lg={10} xl={10}>

@@ -23,6 +23,9 @@ import (
 )
 
 func GetTopUpInfo(c *gin.Context) {
+	id := c.GetInt("id")
+	user, _ := model.GetUserById(id, false)
+	firstRechargeDiscount := getFirstRechargeDiscount(user)
 	// 获取支付方式
 	payMethods := operation_setting.PayMethods
 
@@ -95,7 +98,9 @@ func GetTopUpInfo(c *gin.Context) {
 		"stripe_min_topup":    setting.StripeMinTopUp,
 		"waffo_min_topup":     setting.WaffoMinTopUp,
 		"amount_options":      operation_setting.GetPaymentSetting().AmountOptions,
-		"discount":            operation_setting.GetPaymentSetting().AmountDiscount,
+		"discount":                         operation_setting.GetPaymentSetting().AmountDiscount,
+		"first_recharge_discount":          firstRechargeDiscount.Discount,
+		"first_recharge_discount_eligible": firstRechargeDiscount.Eligible,
 	}
 	common.ApiSuccess(c, data)
 }
@@ -123,7 +128,28 @@ func GetEpayClient() *epay.Client {
 	return withUrl
 }
 
-func getPayMoney(amount int64, group string) float64 {
+type firstRechargeDiscountResult struct {
+	Discount int
+	Rate     float64
+	Eligible bool
+	Applied  bool
+}
+
+func getFirstRechargeDiscount(user *model.User) firstRechargeDiscountResult {
+	discount := operation_setting.GetQuotaSetting().FirstRechargeDiscount
+	if discount <= 0 || discount > 100 {
+		discount = 100
+	}
+	eligible := user != nil && !user.FirstRechargeDiscountUsed && discount < 100
+	return firstRechargeDiscountResult{
+		Discount: discount,
+		Rate:     float64(discount) / 100,
+		Eligible: eligible,
+		Applied:  eligible,
+	}
+}
+
+func getPayMoney(amount int64, group string, firstRechargeDiscountRate float64) float64 {
 	dAmount := decimal.NewFromInt(amount)
 	// 充值金额以“展示类型”为准：
 	// - USD/CNY: 前端传 amount 为金额单位；TOKENS: 前端传 tokens，需要换成 USD 金额
@@ -147,6 +173,9 @@ func getPayMoney(amount int64, group string) float64 {
 		}
 	}
 	dDiscount := decimal.NewFromFloat(discount)
+	if firstRechargeDiscountRate > 0 && firstRechargeDiscountRate < 1 {
+		dDiscount = dDiscount.Mul(decimal.NewFromFloat(firstRechargeDiscountRate))
+	}
 
 	payMoney := dAmount.Mul(dPrice).Mul(dTopupGroupRatio).Mul(dDiscount)
 
@@ -176,12 +205,24 @@ func RequestEpay(c *gin.Context) {
 	}
 
 	id := c.GetInt("id")
-	group, err := model.GetUserGroup(id, true)
+	user, err := model.GetUserById(id, false)
 	if err != nil {
-		c.JSON(200, gin.H{"message": "error", "data": "获取用户分组失败"})
+		c.JSON(200, gin.H{"message": "error", "data": "用户不存在"})
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
+	payDiscount := getFirstRechargeDiscount(user)
+	if payDiscount.Applied {
+		hasPendingDiscountOrder, err := model.HasPendingFirstRechargeDiscountTopUp(id)
+		if err != nil {
+			c.JSON(200, gin.H{"message": "error", "data": "检查首充优惠订单失败"})
+			return
+		}
+		if hasPendingDiscountOrder {
+			c.JSON(200, gin.H{"message": "error", "data": "已有待支付的首充优惠订单，请先完成支付或等待订单失效"})
+			return
+		}
+	}
+	payMoney := getPayMoney(req.Amount, user.Group, payDiscount.Rate)
 	if payMoney < 0.01 {
 		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
 		return
@@ -222,13 +263,14 @@ func RequestEpay(c *gin.Context) {
 		amount = dAmount.Div(dQuotaPerUnit).IntPart()
 	}
 	topUp := &model.TopUp{
-		UserId:        id,
-		Amount:        amount,
-		Money:         payMoney,
-		TradeNo:       tradeNo,
-		PaymentMethod: req.PaymentMethod,
-		CreateTime:    time.Now().Unix(),
-		Status:        "pending",
+		UserId:                       id,
+		Amount:                       amount,
+		Money:                        payMoney,
+		TradeNo:                      tradeNo,
+		PaymentMethod:                req.PaymentMethod,
+		CreateTime:                   time.Now().Unix(),
+		Status:                       "pending",
+		FirstRechargeDiscountApplied: payDiscount.Applied,
 	}
 	err = topUp.Insert()
 	if err != nil {
@@ -383,12 +425,13 @@ func RequestAmount(c *gin.Context) {
 		return
 	}
 	id := c.GetInt("id")
-	group, err := model.GetUserGroup(id, true)
+	user, err := model.GetUserById(id, false)
 	if err != nil {
-		c.JSON(200, gin.H{"message": "error", "data": "获取用户分组失败"})
+		c.JSON(200, gin.H{"message": "error", "data": "用户不存在"})
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
+	payDiscount := getFirstRechargeDiscount(user)
+	payMoney := getPayMoney(req.Amount, user.Group, payDiscount.Rate)
 	if payMoney <= 0.01 {
 		c.JSON(200, gin.H{"message": "error", "data": "充值金额过低"})
 		return

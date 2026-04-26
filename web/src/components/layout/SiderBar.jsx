@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getLucideIcon } from '../../helpers/render';
@@ -8,6 +8,7 @@ import { useSidebar } from '../../hooks/common/useSidebar';
 import { useMinimumLoadingTime } from '../../hooks/common/useMinimumLoadingTime';
 import { isAdmin, isRoot } from '../../helpers';
 import SkeletonWrapper from './components/SkeletonWrapper';
+import { UserContext } from '../../context/User';
 
 import { Nav, Divider, Button } from '@douyinfe/semi-ui';
 
@@ -43,6 +44,7 @@ const routePrefixes = {
 
 const SiderBar = ({ onNavigate = () => {} }) => {
   const { t } = useTranslation();
+  const [userState] = useContext(UserContext);
   const [collapsed, toggleCollapsed] = useSidebarCollapsed();
   const {
     isModuleVisible,
@@ -51,6 +53,8 @@ const SiderBar = ({ onNavigate = () => {} }) => {
   } = useSidebar();
 
   const showSkeleton = useMinimumLoadingTime(sidebarLoading, 200);
+  const showFirstRechargeTag =
+    !collapsed && Boolean(userState?.user?.first_recharge_discount_eligible);
 
   const [selectedKeys, setSelectedKeys] = useState(['home']);
   const location = useLocation();
@@ -117,7 +121,14 @@ const SiderBar = ({ onNavigate = () => {} }) => {
   const financeItems = useMemo(() => {
     const items = [
       {
-        text: t('钱包管理'),
+        text: showFirstRechargeTag ? (
+          <span className='sidebar-first-recharge-label'>
+            <span>{t('钱包管理')}</span>
+            <span className='sidebar-first-recharge-tag'>{t('首充优惠')}</span>
+          </span>
+        ) : (
+          t('钱包管理')
+        ),
         itemKey: 'topup',
         to: '/topup',
       },
@@ -135,7 +146,7 @@ const SiderBar = ({ onNavigate = () => {} }) => {
     });
 
     return filteredItems;
-  }, [t, isModuleVisible]);
+  }, [t, isModuleVisible, showFirstRechargeTag]);
 
   const adminItems = useMemo(() => {
     const items = [
