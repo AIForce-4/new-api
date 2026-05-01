@@ -23,10 +23,10 @@ export const TUTORIAL_PAGE = {
       title: '微信公众号',
       items: [
         {
-          title: 'Claude Code 最佳实践',
+          title: 'Claude Code 最佳实践：可验证、可治理、可分层的工程现实',
           description:
-            '翻译自 anthropic 官网，原文链接 https://www.anthropic.com/enginee',
-          href: 'https://mp.weixin.qq.com/s/_xqHmQsLSquA5qoXe8JQWw',
+            'Claude Code 的核心难点，从来不只在 Prompt，而在于你有没有把它当成一套“可验证、可治理、可分层”的代理系统来用。',
+          href: 'https://mp.weixin.qq.com/s/Suhxzr-KUw78RPTU6nn1gA',
           image: TUTORIAL_PAGE_ASSETS.wechatClaudeCodeBestPractices,
         },
         {
@@ -37,10 +37,10 @@ export const TUTORIAL_PAGE = {
           image: TUTORIAL_PAGE_ASSETS.wechatClaudeCodeRpa,
         },
         {
-          title: '在VSCode中轻松使用Claude 4.5 Sonnet',
+          title: 'Claude Skills｜将 Agent 变为领域专家',
           description:
-            '原本可以正常通过 VSCode 的 Claude Code 插件正常访问，今早更新后发现突然需要登录官方账号了。一招教你解决！',
-          href: 'https://mp.weixin.qq.com/s/zDoEp4hyO88-4NQKxOjtJQ',
+            '介绍 Claude Skills 如何把 Agent 封装成可复用的领域专家能力，让 Claude Code 在特定任务中获得更稳定的上下文、工具和工作流。',
+          href: 'https://mp.weixin.qq.com/s/bwFGcomH6BfkBzhFMiiH1g',
           image: TUTORIAL_PAGE_ASSETS.wechatVscodeClaude45,
         },
       ],
@@ -50,9 +50,11 @@ export const TUTORIAL_PAGE = {
       title: '博客文章',
       items: [
         {
-          title: 'Claude Code 技巧博客',
-          description: '隐藏的高级技巧与窍门',
-          href: 'https://www.youware.com/project/12j7l4bqao',
+          title:
+            '别再裸用 Claude Code 了！32 个亲测 Skills + 8 个 MCP，开发效率直接拉满！',
+          description:
+            '整理 32 个 Claude Code Skills 和 8 个 MCP 的实用搭配，帮助提升 Claude Code 的工程开发效率与自动化能力。',
+          href: 'https://juejin.cn/post/7620060655607857178?searchId=202605010919343DAF1EF4E61014E4AC89',
           image: TUTORIAL_PAGE_ASSETS.blogClaudeCodeTips,
         },
         {
