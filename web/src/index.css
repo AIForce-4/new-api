@@ -3611,6 +3611,11 @@ html.dark .auth-page-shell--marketing {
   color: var(--auth-marketing-muted);
 }
 
+.auth-page-shell__form .semi-form-field {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
 .auth-page-shell--marketing .semi-checkbox-content,
 .auth-page-shell--marketing .semi-typography,
 .auth-page-shell--marketing .semi-typography-text {

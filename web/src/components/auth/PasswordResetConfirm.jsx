@@ -129,7 +129,7 @@ const PasswordResetConfirm = () => {
                     email: email || '',
                     newPassword: newPassword || '',
                   }}
-                  className='space-y-4'
+                  className='auth-page-shell__form space-y-4'
                 >
                   <Form.Input
                     field='email'

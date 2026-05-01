@@ -115,7 +115,7 @@ const PasswordResetForm = () => {
                 </Title>
               </div>
               <div className='px-2 py-8'>
-                <Form className='space-y-3'>
+                <Form className='auth-page-shell__form space-y-3'>
                   <Form.Input
                     field='email'
                     label={t('邮箱')}
