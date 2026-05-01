@@ -146,7 +146,7 @@ const Dashboard = () => {
         onCancel={() => setGroupPromoVisible(false)}
         visible={groupPromoVisible}
         width={920}
-        bodyStyle={{ overflowY: 'visible' }}
+        bodyStyle={{ overflowY: 'hidden' }}
       >
         <div className='group-promo-modal'>
           <div className='group-promo-modal__header'>

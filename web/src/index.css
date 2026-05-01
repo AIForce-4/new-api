@@ -56,29 +56,21 @@ body {
 }
 
 .group-promo-dialog .semi-modal-body {
+  min-height: 74vh;
   max-height: 86vh;
   overflow-y: auto;
-  padding: 10px 28px 28px;
+  padding: 12px 24px 24px;
   background: linear-gradient(180deg, #fffdf7 0%, #f8fafc 100%);
 }
 
-.group-promo-modal .semi-image-preview,
-.group-promo-modal .semi-image-img,
-.group-promo-modal__image {
-  border-radius: 18px;
-}
-
-.group-promo-modal .semi-modal-content,
-.group-promo-modal .semi-modal-body,
-.group-promo-modal .semi-modal-header,
-.group-promo-modal .semi-modal-footer {
-  border-radius: 20px;
+.group-promo-dialog .group-promo-modal__cards {
+  margin-top: 4px;
 }
 
 .group-promo-modal {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   text-align: center;
 }
 
@@ -86,7 +78,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .group-promo-modal__badge {
@@ -102,27 +94,11 @@ body {
   letter-spacing: 0.06em;
 }
 
-.group-promo-modal__title {
-  max-width: 620px;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--semi-color-text-0);
-}
-
-.group-promo-modal__subtitle,
-.group-promo-modal__desc {
-  max-width: 620px;
-  color: var(--semi-color-text-1);
-  font-size: 14px;
-  line-height: 1.8;
-}
-
 .group-promo-modal__warning {
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: 18px;
   border: 1px solid rgba(217, 119, 6, 0.34);
   background: linear-gradient(135deg, rgba(254, 243, 199, 0.98) 0%, rgba(253, 230, 138, 0.92) 100%);
@@ -131,36 +107,38 @@ body {
 }
 
 .group-promo-modal__warning-title {
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   color: #92400e;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1.35;
 }
 
 .group-promo-modal__warning-text {
   color: #78350f;
-  font-size: 14px;
-  line-height: 1.58;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .group-promo-modal__warning-text + .group-promo-modal__warning-text {
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .group-promo-modal__cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
   width: 100%;
+  min-height: 440px;
 }
 
 .group-promo-modal__card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 16px 18px;
+  gap: 7px;
+  padding: 14px 14px 16px;
+  min-height: 304px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -168,7 +146,7 @@ body {
 }
 
 .group-promo-modal__card-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1.25;
   color: var(--semi-color-text-0);
@@ -176,21 +154,14 @@ body {
 
 .group-promo-modal__card-desc {
   color: var(--semi-color-text-1);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.group-promo-modal__images {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  gap: 16px;
-  width: 100%;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .group-promo-modal__image {
-  width: min(100%, 300px);
+  width: min(100%, 260px);
   max-width: 100%;
+  max-height: 320px;
   height: auto;
   object-fit: contain;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);

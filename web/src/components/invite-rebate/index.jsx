@@ -393,7 +393,7 @@ const InviteRebate = () => {
             </Card>
           </div>
 
-          <Card className='!rounded-2xl shadow-sm border-0 mb-6'>
+          <Card className='!rounded-2xl shadow-sm border-0 !my-6'>
             <Title heading={4} className='!mb-6'>
               {t('邀请信息')}
             </Title>
@@ -433,7 +433,7 @@ const InviteRebate = () => {
             </div>
           </Card>
 
-          <Card className='!rounded-2xl shadow-sm border-0 mb-6'>
+          <Card className='!rounded-2xl shadow-sm border-0 !my-6'>
             <Title heading={4} className='!mb-6'>
               {t('被邀请用户列表')}
             </Title>
@@ -451,7 +451,7 @@ const InviteRebate = () => {
             />
           </Card>
 
-          <Card className='!rounded-2xl shadow-sm border-0'>
+          <Card className='!rounded-2xl shadow-sm border-0 !my-6'>
             <Title heading={4} className='!mb-6'>
               {t('奖励事件明细')}
             </Title>
