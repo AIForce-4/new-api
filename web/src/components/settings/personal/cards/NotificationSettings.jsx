@@ -233,6 +233,11 @@ const NotificationSettings = ({
       modules: [
         { key: 'topup', title: t('钱包管理'), description: t('余额充值管理') },
         {
+          key: 'inspirationWorkshop',
+          title: t('灵感画坊'),
+          description: t('图片创作与编辑'),
+        },
+        {
           key: 'personal',
           title: t('个人设置'),
           description: t('个人信息设置'),

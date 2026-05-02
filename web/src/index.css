@@ -7634,3 +7634,16 @@ html.dark .marketing-orbit-card {
     scroll-behavior: auto !important;
   }
 }
+
+@keyframes inspiration-loading-slide {
+  0% {
+    left: -33%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.inspiration-loading-bar {
+  animation: inspiration-loading-slide 1.4s ease-in-out infinite;
+}

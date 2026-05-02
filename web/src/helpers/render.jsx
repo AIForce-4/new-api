@@ -114,6 +114,7 @@ export function getLucideIcon(key, selected = false) {
     case 'pricing':
       return <BadgeDollarSign {...commonProps} color={iconColor} />;
     case 'midjourney':
+    case 'inspirationWorkshop':
       return <ImageIcon {...commonProps} color={iconColor} />;
     case 'task':
       return <CheckSquare {...commonProps} color={iconColor} />;

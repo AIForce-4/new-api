@@ -34,6 +34,7 @@ const routerMap = {
   codex: '/console/install/codex',
   tutorial: '/console/tutorial',
   personal: '/console/personal',
+  inspirationWorkshop: '/console/inspiration-workshop',
   providerWallet: '/console/provider-wallet',
 };
 
@@ -136,6 +137,11 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         text: t('邀请返利'),
         itemKey: 'inviteRebate',
         to: '/invite-rebate',
+      },
+      {
+        text: t('灵感画坊'),
+        itemKey: 'inspirationWorkshop',
+        to: '/inspiration-workshop',
       },
     ];
 
