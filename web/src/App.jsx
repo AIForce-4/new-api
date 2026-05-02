@@ -40,6 +40,7 @@ import ConsoleTutorial from './pages/ConsoleTutorial';
 import Tutorial from './pages/Tutorial';
 import OAuth2Callback from './components/auth/OAuth2Callback';
 import PersonalSetting from './components/settings/PersonalSetting';
+import InspirationWorkshop from './pages/InspirationWorkshop';
 import Setup from './pages/Setup';
 import SetupCheck from './components/layout/SetupCheck';
 
@@ -249,6 +250,16 @@ function App() {
             <PrivateRoute>
               <Suspense fallback={<Loading></Loading>} key={location.pathname}>
                 <PersonalSetting />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/inspiration-workshop'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <InspirationWorkshop />
               </Suspense>
             </PrivateRoute>
           }

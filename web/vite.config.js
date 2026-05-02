@@ -93,14 +93,20 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
+          autoRewrite: true,
+          followRedirects: true,
         },
         '/mj': {
           target: proxyTarget,
           changeOrigin: true,
+          autoRewrite: true,
+          followRedirects: true,
         },
         '/pg': {
           target: proxyTarget,
           changeOrigin: true,
+          autoRewrite: true,
+          followRedirects: true,
         },
       },
     },

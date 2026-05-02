@@ -29,6 +29,7 @@ export const DEFAULT_ADMIN_CONFIG = {
     enabled: true,
     topup: true,
     inviteRebate: true,
+    inspirationWorkshop: true,
     personal: true,
   },
   admin: {

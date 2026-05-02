@@ -170,6 +170,11 @@ export default function SettingsSidebarModulesAdmin(props) {
           description: t('邀请奖励管理'),
         },
         {
+          key: 'inspirationWorkshop',
+          title: t('灵感画坊'),
+          description: t('图片创作与编辑'),
+        },
+        {
           key: 'personal',
           title: t('个人设置'),
           description: t('个人信息设置'),
