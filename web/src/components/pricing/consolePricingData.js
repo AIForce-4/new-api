@@ -41,12 +41,27 @@ export const CONSOLE_PRICING_PRODUCTS = [
       headers: ['模型名称', '输入价格', '输出价格', '缓存创建', '缓存读取', '描述'],
       rows: [
         {
-          key: 'opus',
+          key: 'opus47',
+          cells: [
+            { label: '模型名称', content: 'Claude Opus 4.7', strong: true },
+            { label: '输入价格', content: '$5.00 / 1M tokens' },
+            { label: '输出价格', content: '$25.00 / 1M tokens' },
+            { label: '缓存创建', content: '$6.25 / 1M tokens' },
+            { label: '缓存读取', content: '$0.5 / 1M tokens' },
+            {
+              label: '描述',
+              content: '最新旗舰模型，编码GOAT',
+              muted: true,
+            },
+          ],
+        },
+        {
+          key: 'opus46',
           cells: [
             { label: '模型名称', content: 'Claude Opus 4.6', strong: true },
             { label: '输入价格', content: '$5.00 / 1M tokens' },
             { label: '输出价格', content: '$25.00 / 1M tokens' },
-            { label: '缓存创建', content: '$10.00 / 1M tokens' },
+            { label: '缓存创建', content: '$6.25 / 1M tokens' },
             { label: '缓存读取', content: '$0.5 / 1M tokens' },
             {
               label: '描述',
@@ -61,7 +76,7 @@ export const CONSOLE_PRICING_PRODUCTS = [
             { label: '模型名称', content: 'Claude Sonnet 4.6', strong: true },
             { label: '输入价格', content: '$3.00 / 1M tokens' },
             { label: '输出价格', content: '$15.00 / 1M tokens' },
-            { label: '缓存创建', content: '$6.00 / 1M tokens' },
+            { label: '缓存创建', content: '$3.75 / 1M tokens' },
             { label: '缓存读取', content: '$0.3 / 1M tokens' },
             {
               label: '描述',
@@ -76,7 +91,7 @@ export const CONSOLE_PRICING_PRODUCTS = [
             { label: '模型名称', content: 'Claude Haiku 4.5', strong: true },
             { label: '输入价格', content: '$1.00 / 1M tokens' },
             { label: '输出价格', content: '$5.00 / 1M tokens' },
-            { label: '缓存创建', content: '$2.00 / 1M tokens' },
+            { label: '缓存创建', content: '$1.25 / 1M tokens' },
             { label: '缓存读取', content: '$0.1 / 1M tokens' },
             {
               label: '描述',
@@ -134,6 +149,20 @@ export const CONSOLE_PRICING_PRODUCTS = [
       headers: ['模型名称', '输入价格', '输出价格', '缓存读取', '描述'],
       rows: [
         {
+          key: 'gpt-55',
+          cells: [
+            { label: '模型名称', content: 'gpt-5.5', strong: true },
+            { label: '输入价格', content: '$5 / 1M tokens' },
+            { label: '输出价格', content: '$30 / 1M tokens' },
+            { label: '缓存读取', content: '$0.5 / 1M tokens' },
+            {
+              label: '描述',
+              content: '5.5 旗舰模型，推理深度与复杂工程任务处理能力再创新高',
+              muted: true,
+            },
+          ],
+        },
+        {
           key: 'gpt-54',
           cells: [
             { label: '模型名称', content: 'gpt-5.4', strong: true },
@@ -142,7 +171,7 @@ export const CONSOLE_PRICING_PRODUCTS = [
             { label: '缓存读取', content: '$0.25 / 1M tokens' },
             {
               label: '描述',
-              content: '5.4 旗舰模型，推理深度与复杂工程任务处理能力再创新高',
+              content: '5.4 旗舰模型，擅长深度推理与复杂工程任务处理',
               muted: true,
             },
           ],
@@ -156,7 +185,7 @@ export const CONSOLE_PRICING_PRODUCTS = [
             { label: '缓存读取', content: '$0.175 / 1M tokens' },
             {
               label: '描述',
-              content: '最新一代代码模型，当前 Codex 系列能力天花板',
+              content: '前代旗舰代码模型， Codex 系列能力Max',
               muted: true,
             },
           ],
