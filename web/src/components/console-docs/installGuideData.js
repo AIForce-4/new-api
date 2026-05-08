@@ -74,15 +74,15 @@ const CODEX_AUTH_JSON = codeBlock`
 `;
 
 const CODEX_CONFIG_TOML = codeBlock`
-model_provider = "aicodemirror"
+model_provider = "custom"
 model = "gpt-5.4"
 model_reasoning_effort = "xhigh"
 disable_response_storage = true
 preferred_auth_method = "apikey"
 
-[model_providers.aicodemirror]
-name = "aicodemirror"
-base_url = "https://api.aicodemirror.com/api/codex/backend-api/codex"
+[model_providers.custom]
+name = "custom"
+base_url = "https://www.aif4.org"
 wire_api = "responses"
 `;
 
