@@ -35,6 +35,10 @@ const INSTALL_GUIDE_ASSETS = {
   codexWindowsStep12: '/console-docs/install/codex/windows-img-12.webp',
   codexWindowsStep13: '/console-docs/install/codex/windows-img-13.webp',
   codexWindowsStep14: '/console-docs/install/codex/windows-img-14.webp',
+  codexWindowsNativeImg01: '/console-docs/install/codex/windows-native-img-01.webp',
+  codexWindowsNativeImg02: '/console-docs/install/codex/windows-native-img-02.webp',
+  codexWindowsNativeImg03: '/console-docs/install/codex/windows-native-img-03.webp',
+  codexWindowsNativeImg04: '/console-docs/install/codex/windows-native-img-04.webp',
 };
 
 const SUPPORT_CONTACT = {
@@ -131,6 +135,26 @@ npm i -g @openai/codex
 
 const CODEX_WINDOWS_VERIFY_CODE = codeBlock`
 codex -V
+`;
+
+const CODEX_WINDOWS_NATIVE_NVM_CODE = codeBlock`
+winget install --id=CoreyButler.NVMforWindows -e
+`;
+
+const CODEX_WINDOWS_NATIVE_NODE_CODE = codeBlock`
+nvm install 22
+`;
+
+const CODEX_WINDOWS_NATIVE_EXECUTION_POLICY_CODE = codeBlock`
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+`;
+
+const CODEX_WINDOWS_NATIVE_INSTALL_CODE = codeBlock`
+npm i -g @openai/codex
+`;
+
+const CODEX_WINDOWS_SETUP_SCRIPT_CODE = codeBlock`
+iex (irm 'https://raw.githubusercontent.com/QuantumNous/new-api-docs/refs/heads/main/helper/cl_i-setup.ps1')
 `;
 
 const CLAUDE_CODE_MARKDOWN_SECTIONS = [
@@ -1559,232 +1583,486 @@ export const CODEX_INSTALL_GUIDE = {
       label: 'Windows',
       title: 'Windows Codex安装指南',
       description: '在 Windows 系统上安装官方 Codex CLI',
-      sections: [
+      defaultSubTab: 'native',
+      subTabs: [
         {
-          id: 'official-package',
-          type: 'callout',
-          tone: 'success',
-          title: '官方原版安装',
-          blocks: [
+          id: 'native',
+          label: '正常环境安装',
+          sections: [
             {
-              type: 'paragraph',
-              text: '此流程100%使用官方原版安装包，确保服务体验与官方完全一致。',
-            },
-          ],
-        },
-        {
-          id: 'requirements',
-          type: 'section',
-          title: '系统要求',
-          blocks: [
-            {
-              type: 'paragraph',
-              text: 'Windows 10 (版本 1809 / build 17763) 及以上。',
-            },
-          ],
-        },
-        {
-          id: 'steps',
-          type: 'steps',
-          title: '安装步骤',
-          supportContact: WINDOWS_SUPPORT_CONTACT,
-          steps: [
-            {
-              title: '1. 打开终端',
+              id: 'official-package',
+              type: 'callout',
+              tone: 'success',
+              title: '官方原版安装',
               blocks: [
                 {
                   type: 'paragraph',
-                  text: '先打开 PowerShell，后续安装步骤都从这里开始。',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsOpenTerminal,
-                  alt: 'Windows Codex 打开终端',
+                  text: '此流程100%使用官方原版安装包，确保服务体验与官方完全一致。',
                 },
               ],
             },
             {
-              title: '2. 安装 WSL',
+              id: 'requirements',
+              type: 'section',
+              title: '系统要求',
               blocks: [
                 {
                   type: 'paragraph',
-                  text: '为在 Windows 上获得最佳性能，请安装并使用 Windows Subsystem for Linux (WSL2)。',
+                  text: 'Windows 10 (版本 1809 / build 17763) 及以上。',
                 },
+              ],
+            },
+            {
+              id: 'native-steps',
+              type: 'steps',
+              title: '安装步骤',
+              supportContact: WINDOWS_SUPPORT_CONTACT,
+              steps: [
                 {
-                  type: 'paragraph',
-                  text: '安装 WSL2 后，按提示重启 Windows 计算机。',
-                },
-                {
-                  type: 'note',
-                  title: 'Windows 注意事项',
-                  items: [
-                    '建议使用 PowerShell 而不是 CMD',
-                    '如果遇到权限问题，尝试以管理员身份运行',
-                    '某些杀毒软件可能会误报，需要添加白名单',
+                  title: '1. 打开终端',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '先打开 PowerShell，后续安装步骤都从这里开始。',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsOpenTerminal,
+                      alt: 'Windows Codex 打开终端',
+                    },
                   ],
                 },
                 {
-                  type: 'code',
-                  code: CODEX_WINDOWS_WSL_CODE,
+                  title: '2. 安装 NVM',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '使用 winget 安装 NVM for Windows，用于管理 Node.js 版本：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_NATIVE_NVM_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsNativeImg01,
+                      alt: 'Windows 安装 NVM',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '安装完成后，需要关闭并重新打开 PowerShell 窗口，使 nvm 命令生效。',
+                    },
+                  ],
                 },
                 {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep03,
-                  alt: 'Windows Codex WSL 安装步骤',
+                  title: '3. 安装 Node.js',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '重新打开 PowerShell 窗口后，使用 NVM 安装 Node.js 22：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_NATIVE_NODE_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsNativeImg02,
+                      alt: 'Windows 安装 Node.js',
+                    },
+                  ],
                 },
+                {
+                  title: '4. 设置 PowerShell 执行策略',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '设置 PowerShell 执行策略，解决 npm 全局命令无法执行的问题：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_NATIVE_EXECUTION_POLICY_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsNativeImg03,
+                      alt: 'Windows 设置执行策略',
+                    },
+                  ],
+                },
+                {
+                  title: '5. 安装 Codex CLI',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '运行以下命令安装 Codex CLI。这个命令会从 npm 官方仓库下载并安装最新版本的 Codex CLI。',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_NATIVE_INSTALL_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsNativeImg04,
+                      alt: 'Windows 安装 Codex CLI',
+                    },
+                  ],
+                },
+                {
+                  title: '6. 修改配置文件',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '删除 C:\\Users\\你的用户\\.codex 下已存在的 auth.json 和 config.toml（若有），然后按下面内容重新创建。',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: 'auth.json 内容：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_AUTH_JSON,
+                    },
+                    {
+                      type: 'paragraph',
+                      text: 'config.toml 内容：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_CONFIG_TOML,
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '也可以参考下列一键修改配置文件截图（在 PowerShell 中运行）：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_SETUP_SCRIPT_CODE,
+                      language: 'powershell',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsConfigure,
+                      alt: 'Windows Codex 配置文件修改',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: 'API密钥在图示位置获取',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.apiKeyGuide,
+                      alt: 'API Key 配置说明',
+                    },
+                  ],
+                },
+                {
+                  title: '7. 开始使用 Codex CLI',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '现在你可以开始使用 Codex CLI 了。先验证安装结果，然后进入项目目录启动 Codex。',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_VERIFY_CODE,
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_START_CODE,
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '首次启动与权限设置参考下列截图：',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep09,
+                      alt: 'Windows Codex 使用步骤 1',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep10,
+                      alt: 'Windows Codex 使用步骤 2',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '设置 Codex CLI 的权限：1. 允许 Codex 直接修改文件；2. Codex 修改文件需要手动授权。',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '选择模型：',
+                    },
+                    {
+                      type: 'code',
+                      code: '/model',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep11,
+                      alt: 'Windows Codex 模型选择步骤 1',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep12,
+                      alt: 'Windows Codex 模型选择步骤 2',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep13,
+                      alt: 'Windows Codex 模型选择步骤 3',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep14,
+                      alt: 'Windows Codex 模型选择步骤 4',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '注意：修改接口地址后，使用所有模型（包括官方预设模型）均调用自定义接入点，而不使用官方账号额度。',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'wsl',
+          label: 'WSL 版本安装',
+          sections: [
+            {
+              id: 'official-package',
+              type: 'callout',
+              tone: 'success',
+              title: '官方原版安装',
+              blocks: [
                 {
                   type: 'paragraph',
-                  text: '继续下载并安装 Node Version Manager (NVM)：',
-                },
-                {
-                  type: 'code',
-                  code: CODEX_WINDOWS_NVM_INSTALL_CODE,
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep04,
-                  alt: 'Windows Codex NVM 安装步骤',
-                },
-                {
-                  type: 'paragraph',
-                  text: '标签栏新开一个 PowerShell 窗口，打开 WSL 后安装 Node.js 22：',
-                },
-                {
-                  type: 'code',
-                  code: CODEX_WINDOWS_NODE_INSTALL_CODE,
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep05,
-                  alt: 'Windows Codex Node.js 安装步骤',
+                  text: '此流程100%使用官方原版安装包，确保服务体验与官方完全一致。',
                 },
               ],
             },
             {
-              title: '3. 安装 Codex CLI',
+              id: 'requirements',
+              type: 'section',
+              title: '系统要求',
               blocks: [
                 {
                   type: 'paragraph',
-                  text: '在 WSL 中运行以下命令安装 Codex CLI。这个命令会从 npm 官方仓库下载并安装最新版本的 Codex CLI。',
-                },
-                {
-                  type: 'code',
-                  code: CODEX_WINDOWS_INSTALL_CODE,
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep06,
-                  alt: 'Windows Codex CLI 安装步骤',
+                  text: 'Windows 10 (版本 1809 / build 17763) 及以上。',
                 },
               ],
             },
             {
-              title: '4. 修改配置文件',
-              blocks: [
+              id: 'wsl-steps',
+              type: 'steps',
+              title: '安装步骤',
+              supportContact: WINDOWS_SUPPORT_CONTACT,
+              steps: [
                 {
-                  type: 'paragraph',
-                  text: '删除 C:\\Users\\你的用户\\.codex 下已存在的 auth.json 和 config.toml（若有），然后按下面内容重新创建。',
+                  title: '1. 打开终端',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '先打开 PowerShell，后续安装步骤都从这里开始。',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsOpenTerminal,
+                      alt: 'Windows Codex 打开终端',
+                    },
+                  ],
                 },
                 {
-                  type: 'paragraph',
-                  text: 'auth.json 内容：',
+                  title: '2. 安装 WSL',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '为在 Windows 上获得最佳性能，请安装并使用 Windows Subsystem for Linux (WSL2)。',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '安装 WSL2 后，按提示重启 Windows 计算机。',
+                    },
+                    {
+                      type: 'note',
+                      title: 'Windows 注意事项',
+                      items: [
+                        '建议使用 PowerShell 而不是 CMD',
+                        '如果遇到权限问题，尝试以管理员身份运行',
+                        '某些杀毒软件可能会误报，需要添加白名单',
+                      ],
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_WSL_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep03,
+                      alt: 'Windows Codex WSL 安装步骤',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '继续下载并安装 Node Version Manager (NVM)：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_NVM_INSTALL_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep04,
+                      alt: 'Windows Codex NVM 安装步骤',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '标签栏新开一个 PowerShell 窗口，打开 WSL 后安装 Node.js 22：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_NODE_INSTALL_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep05,
+                      alt: 'Windows Codex Node.js 安装步骤',
+                    },
+                  ],
                 },
                 {
-                  type: 'code',
-                  code: CODEX_AUTH_JSON,
+                  title: '3. 安装 Codex CLI',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '在 WSL 中运行以下命令安装 Codex CLI。这个命令会从 npm 官方仓库下载并安装最新版本的 Codex CLI。',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_INSTALL_CODE,
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep06,
+                      alt: 'Windows Codex CLI 安装步骤',
+                    },
+                  ],
                 },
                 {
-                  type: 'paragraph',
-                  text: 'config.toml 内容：',
+                  title: '4. 修改配置文件',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '删除 /mnt/c/Users/你的用户/.codex 下已存在的 auth.json 和 config.toml（若有），然后按下面内容重新创建。',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: 'auth.json 内容：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_AUTH_JSON,
+                    },
+                    {
+                      type: 'paragraph',
+                      text: 'config.toml 内容：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_CONFIG_TOML,
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '也可以参考下列一键修改配置文件截图（在 PowerShell 中运行）：',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_SETUP_SCRIPT_CODE,
+                      language: 'powershell',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsConfigure,
+                      alt: 'Windows Codex 配置文件修改',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: 'API密钥在图示位置获取',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.apiKeyGuide,
+                      alt: 'API Key 配置说明',
+                    },
+                  ],
                 },
                 {
-                  type: 'code',
-                  code: CODEX_CONFIG_TOML,
-                },
-                {
-                  type: 'paragraph',
-                  text: '也可以参考下列一键修改配置文件截图：',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsConfigure,
-                  alt: 'Windows Codex 配置文件修改',
-                },
-                {
-                  type: 'paragraph',
-                  text: 'API密钥在图示位置获取',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.apiKeyGuide,
-                  alt: 'API Key 配置说明',
-                },
-              ],
-            },
-            {
-              title: '5. 开始使用 Codex CLI',
-              blocks: [
-                {
-                  type: 'paragraph',
-                  text: '现在你可以开始使用 Codex CLI 了。先验证安装结果，然后进入项目目录启动 Codex。',
-                },
-                {
-                  type: 'code',
-                  code: CODEX_WINDOWS_VERIFY_CODE,
-                },
-                {
-                  type: 'code',
-                  code: CODEX_START_CODE,
-                },
-                {
-                  type: 'paragraph',
-                  text: '首次启动与权限设置参考下列截图：',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep09,
-                  alt: 'Windows Codex 使用步骤 1',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep10,
-                  alt: 'Windows Codex 使用步骤 2',
-                },
-                {
-                  type: 'paragraph',
-                  text: '设置 Codex CLI 的权限：1. 允许 Codex 直接修改文件；2. Codex 修改文件需要手动授权。',
-                },
-                {
-                  type: 'paragraph',
-                  text: '选择模型：',
-                },
-                {
-                  type: 'code',
-                  code: '/model',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep11,
-                  alt: 'Windows Codex 模型选择步骤 1',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep12,
-                  alt: 'Windows Codex 模型选择步骤 2',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep13,
-                  alt: 'Windows Codex 模型选择步骤 3',
-                },
-                {
-                  type: 'image',
-                  src: INSTALL_GUIDE_ASSETS.codexWindowsStep14,
-                  alt: 'Windows Codex 模型选择步骤 4',
-                },
-                {
-                  type: 'paragraph',
-                  text: '注意：修改接口地址后，使用所有模型（包括官方预设模型）均调用自定义接入点，而不使用官方账号额度。',
+                  title: '5. 开始使用 Codex CLI',
+                  blocks: [
+                    {
+                      type: 'paragraph',
+                      text: '现在你可以开始使用 Codex CLI 了。先验证安装结果，然后进入项目目录启动 Codex。',
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_WINDOWS_VERIFY_CODE,
+                    },
+                    {
+                      type: 'code',
+                      code: CODEX_START_CODE,
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '首次启动与权限设置参考下列截图：',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep09,
+                      alt: 'Windows Codex 使用步骤 1',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep10,
+                      alt: 'Windows Codex 使用步骤 2',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '设置 Codex CLI 的权限：1. 允许 Codex 直接修改文件；2. Codex 修改文件需要手动授权。',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '选择模型：',
+                    },
+                    {
+                      type: 'code',
+                      code: '/model',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep11,
+                      alt: 'Windows Codex 模型选择步骤 1',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep12,
+                      alt: 'Windows Codex 模型选择步骤 2',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep13,
+                      alt: 'Windows Codex 模型选择步骤 3',
+                    },
+                    {
+                      type: 'image',
+                      src: INSTALL_GUIDE_ASSETS.codexWindowsStep14,
+                      alt: 'Windows Codex 模型选择步骤 4',
+                    },
+                    {
+                      type: 'paragraph',
+                      text: '注意：修改接口地址后，使用所有模型（包括官方预设模型）均调用自定义接入点，而不使用官方账号额度。',
+                    },
+                  ],
                 },
               ],
             },

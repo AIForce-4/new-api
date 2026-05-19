@@ -4,12 +4,8 @@ import { Modal, Toast } from '@douyinfe/semi-ui';
 import {
   ChevronDown,
   ChevronUp,
-  ExternalLink,
-  FileCode2,
   Laptop,
   Monitor,
-  ScanSearch,
-  ShieldCheck,
 } from 'lucide-react';
 import { Claude, OpenAI } from '../../helpers/lobeIcons';
 import { copy } from '../../helpers/utils';
@@ -311,6 +307,26 @@ const PlatformTabs = ({ activePlatformId, guide }) => (
   </div>
 );
 
+const SubTabs = ({ subTabs, activeSubTab, onSubTabChange }) => (
+  <div className='console-docs__sub-tabs'>
+    {subTabs.map((tab) => (
+      <button
+        key={tab.id}
+        className={[
+          'console-docs__sub-tab',
+          activeSubTab === tab.id ? 'console-docs__sub-tab--active' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        onClick={() => onSubTabChange(tab.id)}
+        type='button'
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+);
+
 const MarkdownInstallContent = ({ platform }) => (
   <div className='console-docs__content'>
     <section className='console-docs__section-card console-docs__section-card--markdown'>
@@ -341,14 +357,6 @@ const MarkdownInstallContent = ({ platform }) => (
   </div>
 );
 
-const sectionIcons = {
-  callout: ShieldCheck,
-  section: FileCode2,
-  steps: ScanSearch,
-  accordion: Monitor,
-  faq: ExternalLink,
-};
-
 const InstallHero = ({ guide, platform }) => {
   const ProductIcon = PRODUCT_ICONS[guide.productId];
 
@@ -372,50 +380,28 @@ const InstallHero = ({ guide, platform }) => {
 const InstallSections = ({ onSupportClick, openAccordions, platform, toggleAccordion }) => (
   <div className='console-docs__content'>
     {platform.sections.map((section) => {
-      const SectionIcon = sectionIcons[section.type] || FileCode2;
-      const iconBadge = (
-        <span className='console-docs__section-icon' aria-hidden='true'>
-          <SectionIcon size={16} />
-        </span>
-      );
-
       if (section.type === 'accordion') {
         return (
-          <div key={section.id} className='console-docs__section-with-icon'>
-            {iconBadge}
-            <AccordionSection
-              onToggle={() => toggleAccordion(section.id)}
-              open={openAccordions.has(section.id)}
-              section={section}
-            />
-          </div>
+          <AccordionSection
+            key={section.id}
+            onToggle={() => toggleAccordion(section.id)}
+            open={openAccordions.has(section.id)}
+            section={section}
+          />
         );
       }
 
       if (section.type === 'steps') {
         return (
-          <div key={section.id} className='console-docs__section-with-icon'>
-            {iconBadge}
-            <StepsSection onSupportClick={onSupportClick} section={section} />
-          </div>
+          <StepsSection key={section.id} onSupportClick={onSupportClick} section={section} />
         );
       }
 
       if (section.type === 'faq') {
-        return (
-          <div key={section.id} className='console-docs__section-with-icon'>
-            {iconBadge}
-            <FaqSection section={section} />
-          </div>
-        );
+        return <FaqSection key={section.id} section={section} />;
       }
 
-      return (
-        <div key={section.id} className='console-docs__section-with-icon'>
-          {iconBadge}
-          <DefaultSection section={section} />
-        </div>
-      );
+      return <DefaultSection key={section.id} section={section} />;
     })}
   </div>
 );
@@ -430,18 +416,34 @@ const ConsoleInstallPage = ({ productId }) => {
   );
   const [supportVisible, setSupportVisible] = useState(false);
   const [openAccordions, setOpenAccordions] = useState(new Set());
+  const [activeSubTab, setActiveSubTab] = useState(
+    () => platform?.defaultSubTab || null,
+  );
+
+  useEffect(() => {
+    setActiveSubTab(platform?.defaultSubTab || null);
+  }, [platform?.id]);
+
+  const activeSections = useMemo(() => {
+    if (platform?.subTabs && activeSubTab) {
+      const subTab = platform.subTabs.find((t) => t.id === activeSubTab);
+      return subTab?.sections || [];
+    }
+    return platform?.sections || [];
+  }, [platform, activeSubTab]);
 
   useEffect(() => {
     if (!guide || !platform || platform.contentType === 'markdown') return;
 
+    const sections = activeSections;
     const nextOpenAccordions = new Set(
-      platform.sections
+      sections
         .filter((section) => section.type === 'accordion' && section.defaultOpen)
         .map((section) => section.id),
     );
 
     setOpenAccordions(nextOpenAccordions);
-  }, [guide, platform]);
+  }, [guide, platform, activeSections]);
 
   if (!guide) {
     return null;
@@ -452,21 +454,30 @@ const ConsoleInstallPage = ({ productId }) => {
   }
 
   const supportContact =
-    platform.sections?.find((section) => section.supportContact)?.supportContact || null;
+    activeSections?.find((section) => section.supportContact)?.supportContact || null;
 
   const isMarkdownContent = platform.contentType === 'markdown';
+
+  const sectionsView = { sections: activeSections };
 
   return (
     <>
       <div className='console-docs console-docs--install'>
         <InstallHero guide={guide} platform={platform} />
+        {platform.subTabs ? (
+          <SubTabs
+            activeSubTab={activeSubTab}
+            onSubTabChange={setActiveSubTab}
+            subTabs={platform.subTabs}
+          />
+        ) : null}
         {isMarkdownContent ? (
           <MarkdownInstallContent platform={platform} />
         ) : (
           <InstallSections
             onSupportClick={() => setSupportVisible(true)}
             openAccordions={openAccordions}
-            platform={platform}
+            platform={sectionsView}
             toggleAccordion={(sectionId) => {
               setOpenAccordions((current) => {
                 const next = new Set(current);
