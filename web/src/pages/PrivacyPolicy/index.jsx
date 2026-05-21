@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import DocumentRenderer from '../../components/common/DocumentRenderer';
+import { privacyPolicyStyle, privacyPolicyBody } from './content';
 
 const PrivacyPolicy = () => {
   const { t } = useTranslation();
 
+  useEffect(() => {
+    document.title = t('隐私政策');
+  }, [t]);
+
   return (
-    <DocumentRenderer
-      apiEndpoint='/api/privacy-policy'
-      title={t('隐私政策')}
-      cacheKey='privacy_policy'
-      emptyMessage={t('加载隐私政策内容失败...')}
-    />
+    <>
+      <style>{privacyPolicyStyle}</style>
+      <div dangerouslySetInnerHTML={{ __html: privacyPolicyBody }} />
+    </>
   );
 };
 

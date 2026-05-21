@@ -97,6 +97,7 @@ const RegisterForm = () => {
   const [githubButtonState, setGithubButtonState] = useState('idle');
   const [githubButtonDisabled, setGithubButtonDisabled] = useState(false);
   const githubTimeoutRef = useRef(null);
+  const termsWarningTimeRef = useRef(0);
   const githubButtonText = t(githubButtonTextKeyByState[githubButtonState]);
 
   const logo = getLogo();
@@ -206,7 +207,20 @@ const RegisterForm = () => {
     setInputs((inputs) => ({ ...inputs, [name]: value }));
   }
 
+  const checkTermsAgreed = () => {
+    if (!agreedToTerms) {
+      const now = Date.now();
+      if (now - termsWarningTimeRef.current > 1500) {
+        termsWarningTimeRef.current = now;
+        showInfo(t('请勾选用户协议和隐私政策在进行下一步'));
+      }
+      return false;
+    }
+    return true;
+  };
+
   async function handleSubmit(e) {
+    if (!checkTermsAgreed()) return;
     if (password.length < 8) {
       showInfo('密码长度不得小于 8 位！');
       return;
@@ -529,6 +543,36 @@ const RegisterForm = () => {
                 </Button>
               </div>
 
+              <div className='mt-6'>
+                <div>
+                  <Checkbox
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  >
+                    <Text size='small' className='text-gray-600'>
+                      {t('我已阅读并同意')}
+                      <a
+                        href='/user-agreement'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className={linkClassName}
+                      >
+                        {t('用户协议')}
+                      </a>
+                      {t('和')}
+                      <a
+                        href='/privacy-policy'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className={linkClassName}
+                      >
+                        {t('隐私政策')}
+                      </a>
+                    </Text>
+                  </Checkbox>
+                </div>
+              </div>
+
               <div className='mt-6 text-center text-sm'>
                 <Text>
                   {t('已有账户？')}{' '}
@@ -640,43 +684,35 @@ const RegisterForm = () => {
                   prefix={<IconKey />}
                 />
 
-                {(hasUserAgreement || hasPrivacyPolicy) && (
-                  <div className='pt-4'>
+                <div className='pt-4'>
+                  <div>
                     <Checkbox
                       checked={agreedToTerms}
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
                     >
                       <Text size='small' className='text-gray-600'>
                         {t('我已阅读并同意')}
-                        {hasUserAgreement && (
-                          <>
-                            <a
-                              href='/user-agreement'
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className={linkClassName}
-                            >
-                              {t('用户协议')}
-                            </a>
-                          </>
-                        )}
-                        {hasUserAgreement && hasPrivacyPolicy && t('和')}
-                        {hasPrivacyPolicy && (
-                          <>
-                            <a
-                              href='/privacy-policy'
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className={linkClassName}
-                            >
-                              {t('隐私政策')}
-                            </a>
-                          </>
-                        )}
+                        <a
+                          href='/user-agreement'
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className={linkClassName}
+                        >
+                          {t('用户协议')}
+                        </a>
+                        {t('和')}
+                        <a
+                          href='/privacy-policy'
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className={linkClassName}
+                        >
+                          {t('隐私政策')}
+                        </a>
                       </Text>
                     </Checkbox>
                   </div>
-                )}
+                </div>
 
                 <div className='space-y-2 pt-2'>
                   <Button
@@ -686,9 +722,6 @@ const RegisterForm = () => {
                     htmlType='submit'
                     onClick={handleSubmit}
                     loading={registerLoading}
-                    disabled={
-                      (hasUserAgreement || hasPrivacyPolicy) && !agreedToTerms
-                    }
                   >
                     {t('注册')}
                   </Button>

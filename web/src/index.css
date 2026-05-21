@@ -3643,6 +3643,30 @@ html.dark .auth-page-shell--marketing {
   color: var(--auth-marketing-muted);
 }
 
+.auth-page-shell--marketing .semi-checkbox-content,
+.auth-page-shell--marketing .semi-checkbox-content .semi-typography,
+.auth-page-shell--marketing .semi-checkbox-content .semi-typography-text {
+  line-height: 20px;
+}
+
+.auth-page-shell--marketing .semi-checkbox {
+  --semi-color-primary: var(--auth-marketing-accent);
+  --semi-color-primary-hover: var(--auth-marketing-accent-dark);
+  --semi-color-primary-active: var(--auth-marketing-accent-dark);
+  --semi-color-focus-border: var(--auth-marketing-accent);
+}
+
+.auth-page-shell--marketing .semi-checkbox:hover .semi-checkbox-inner-display {
+  box-shadow: inset 0 0 0 1px var(--auth-marketing-accent) !important;
+}
+
+.auth-page-shell--marketing .semi-checkbox:hover .semi-checkbox-inner-checked .semi-checkbox-inner-display,
+.auth-page-shell--marketing .semi-checkbox-indeterminate .semi-checkbox-inner-display:hover,
+.auth-page-shell--marketing .semi-checkbox-checked .semi-checkbox-inner-display:hover {
+  background: var(--auth-marketing-accent-dark) !important;
+  box-shadow: inset 0 0 0 1px var(--auth-marketing-accent-dark) !important;
+}
+
 .auth-page-shell--marketing .semi-divider-horizontal::before,
 .auth-page-shell--marketing .semi-divider-horizontal::after {
   border-color: var(--auth-marketing-border);

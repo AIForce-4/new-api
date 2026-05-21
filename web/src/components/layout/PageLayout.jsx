@@ -72,6 +72,9 @@ const PageLayout = () => {
     '/reset',
     '/user/reset',
   ].includes(location.pathname);
+  const isFullPageRoute = ['/user-agreement', '/privacy-policy'].includes(
+    location.pathname,
+  );
   const showSider = isConsoleRoute && (!isMobile || drawerOpen);
 
   useEffect(() => {
@@ -160,6 +163,15 @@ const PageLayout = () => {
       }
     }
   }, [i18n, userState?.user?.setting]);
+
+  if (isFullPageRoute) {
+    return (
+      <>
+        <App />
+        <ToastContainer />
+      </>
+    );
+  }
 
   return (
     <Layout

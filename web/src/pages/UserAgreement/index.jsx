@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import DocumentRenderer from '../../components/common/DocumentRenderer';
+import { userAgreementStyle, userAgreementBody } from './content';
 
 const UserAgreement = () => {
   const { t } = useTranslation();
 
+  useEffect(() => {
+    document.title = t('用户协议');
+  }, [t]);
+
   return (
-    <DocumentRenderer
-      apiEndpoint='/api/user-agreement'
-      title={t('用户协议')}
-      cacheKey='user_agreement'
-      emptyMessage={t('加载用户协议内容失败...')}
-    />
+    <>
+      <style>{userAgreementStyle}</style>
+      <div dangerouslySetInnerHTML={{ __html: userAgreementBody }} />
+    </>
   );
 };
 
