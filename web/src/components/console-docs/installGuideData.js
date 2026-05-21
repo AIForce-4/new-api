@@ -86,7 +86,7 @@ preferred_auth_method = "apikey"
 
 [model_providers.custom]
 name = "custom"
-base_url = "https://www.aif4.org"
+base_url = "https://www.aif4.org/v1"
 wire_api = "responses"
 `;
 
