@@ -728,7 +728,9 @@ func HandleStreamResponseData(c *gin.Context, info *relaycommon.RelayInfo, claud
 				data = patchClaudeMessageDeltaUsageData(data, buildMessageDeltaPatchUsage(&claudeResponse, claudeInfo))
 			}
 		}
-		helper.ClaudeChunkData(c, claudeResponse, data)
+		if !info.ClientDisconnected {
+			helper.ClaudeChunkData(c, claudeResponse, data)
+		}
 	} else if info.RelayFormat == types.RelayFormatOpenAI {
 		response := StreamResponseClaude2OpenAI(&claudeResponse)
 
@@ -736,9 +738,11 @@ func HandleStreamResponseData(c *gin.Context, info *relaycommon.RelayInfo, claud
 			return nil
 		}
 
-		err = helper.ObjectData(c, response)
-		if err != nil {
-			logger.LogError(c, "send_stream_response_failed: "+err.Error())
+		if !info.ClientDisconnected {
+			err = helper.ObjectData(c, response)
+			if err != nil {
+				logger.LogError(c, "send_stream_response_failed: "+err.Error())
+			}
 		}
 	}
 	return nil
@@ -758,14 +762,16 @@ func HandleStreamFinalResponse(c *gin.Context, info *relaycommon.RelayInfo, clau
 	if info.RelayFormat == types.RelayFormatClaude {
 		//
 	} else if info.RelayFormat == types.RelayFormatOpenAI {
-		if info.ShouldIncludeUsage {
-			response := helper.GenerateFinalUsageResponse(claudeInfo.ResponseId, claudeInfo.Created, info.UpstreamModelName, *claudeInfo.Usage)
-			err := helper.ObjectData(c, response)
-			if err != nil {
-				common.SysLog("send final response failed: " + err.Error())
+		if !info.ClientDisconnected {
+			if info.ShouldIncludeUsage {
+				response := helper.GenerateFinalUsageResponse(claudeInfo.ResponseId, claudeInfo.Created, info.UpstreamModelName, *claudeInfo.Usage)
+				err := helper.ObjectData(c, response)
+				if err != nil {
+					common.SysLog("send final response failed: " + err.Error())
+				}
 			}
+			helper.Done(c)
 		}
-		helper.Done(c)
 	}
 }
 

@@ -151,6 +151,12 @@ type RelayInfo struct {
 	UseRuntimeHeadersOverride             bool
 	ParamOverrideAudit                    []string
 
+	// ClientDisconnected is set to true when the downstream client disconnects before the
+	// upstream stream finishes. The scanner switches to drain mode: it keeps reading from
+	// upstream (up to DrainTimeout) to collect accurate usage data for billing, but stops
+	// forwarding data to the client.
+	ClientDisconnected bool
+
 	PriceData types.PriceData
 
 	Request dto.Request

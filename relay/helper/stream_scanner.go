@@ -25,6 +25,9 @@ const (
 	InitialScannerBufferSize    = 64 << 10 // 64KB (64*1024)
 	DefaultMaxScannerBufferSize = 64 << 20 // 64MB (64*1024*1024) default SSE buffer size
 	DefaultPingInterval         = 10 * time.Second
+	// DrainTimeout is how long we keep reading the upstream stream after the client
+	// disconnects, so that we collect accurate usage data for billing.
+	DrainTimeout = 180 * time.Second
 )
 
 func getScannerBufferSize() int {
@@ -212,6 +215,10 @@ func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon
 			}
 		}()
 
+		draining := false
+		drainTimer := time.NewTimer(DrainTimeout)
+		drainTimer.Stop() // 先停止，客户端断开时再激活
+
 		for scanner.Scan() {
 			// 检查是否需要停止
 			select {
@@ -219,9 +226,29 @@ func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon
 				return
 			case <-ctx.Done():
 				return
-			case <-c.Request.Context().Done():
-				return
 			default:
+			}
+
+			// 检查客户端是否断开，断开后切换 drain 模式
+			if !draining {
+				select {
+				case <-c.Request.Context().Done():
+					draining = true
+					info.ClientDisconnected = true
+					drainTimer.Reset(DrainTimeout)
+					logger.LogInfo(c, "client disconnected, switching to drain mode for accurate billing")
+				default:
+				}
+			}
+
+			// drain 超时则终止
+			if draining {
+				select {
+				case <-drainTimer.C:
+					logger.LogInfo(c, "drain timeout reached, stopping upstream read")
+					return
+				default:
+				}
 			}
 
 			ticker.Reset(streamingTimeout)
@@ -242,8 +269,10 @@ func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon
 				continue
 			}
 			if !strings.HasPrefix(data, "[DONE]") {
-				info.SetFirstResponseTime()
-				info.ReceivedResponseCount++
+				if !draining {
+					info.SetFirstResponseTime()
+					info.ReceivedResponseCount++
+				}
 
 				select {
 				case dataChan <- data:
@@ -269,15 +298,15 @@ func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon
 	})
 
 	// 主循环等待完成或超时
+	// 注意：客户端断开不在此处退出，scanner goroutine 会切换到 drain 模式继续读上游
 	select {
 	case <-ticker.C:
-		// 超时处理逻辑
 		logger.LogError(c, "streaming timeout")
 	case <-stopChan:
-		// 正常结束
-		logger.LogInfo(c, "streaming finished")
-	case <-c.Request.Context().Done():
-		// 客户端断开连接
-		logger.LogInfo(c, "client disconnected")
+		if info.ClientDisconnected {
+			logger.LogInfo(c, "drain finished")
+		} else {
+			logger.LogInfo(c, "streaming finished")
+		}
 	}
 }
