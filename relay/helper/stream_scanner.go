@@ -144,6 +144,7 @@ func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon
 					gopool.Go(func() {
 						writeMutex.Lock()
 						defer writeMutex.Unlock()
+						ExtendWriteDeadline(c)
 						done <- PingData(c)
 					})
 
@@ -192,6 +193,7 @@ func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon
 		}()
 		for data := range dataChan {
 			writeMutex.Lock()
+			ExtendWriteDeadline(c)
 			success := dataHandler(data)
 			writeMutex.Unlock()
 			if !success {

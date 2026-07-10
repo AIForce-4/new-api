@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/dto"
@@ -13,6 +14,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
+
+// streamWriteTimeout bounds a single blocked write to a slow client so the
+// stream handler can always finish. Without it, a slow but connected client
+// (full TCP buffer, no server WriteTimeout) could hang the handler forever.
+const streamWriteTimeout = 30 * time.Second
+
+// ExtendWriteDeadline pushes the connection write deadline forward before each
+// stream write. Best-effort: writers that don't support deadlines (e.g.
+// httptest recorders) are silently ignored.
+func ExtendWriteDeadline(c *gin.Context) {
+	if c == nil || c.Writer == nil {
+		return
+	}
+	_ = http.NewResponseController(c.Writer).SetWriteDeadline(time.Now().Add(streamWriteTimeout))
+}
+
+func requestContextDone(c *gin.Context) bool {
+	return c != nil && c.Request != nil && c.Request.Context().Err() != nil
+}
 
 func FlushWriter(c *gin.Context) (err error) {
 	defer func() {
@@ -25,7 +45,7 @@ func FlushWriter(c *gin.Context) (err error) {
 		return nil
 	}
 
-	if c.Request != nil && c.Request.Context().Err() != nil {
+	if requestContextDone(c) {
 		return fmt.Errorf("request context done: %w", c.Request.Context().Err())
 	}
 
@@ -83,7 +103,7 @@ func StringData(c *gin.Context, str string) error {
 		return errors.New("context or writer is nil")
 	}
 
-	if c.Request != nil && c.Request.Context().Err() != nil {
+	if requestContextDone(c) {
 		return fmt.Errorf("request context done: %w", c.Request.Context().Err())
 	}
 
@@ -96,7 +116,7 @@ func PingData(c *gin.Context) error {
 		return errors.New("context or writer is nil")
 	}
 
-	if c.Request != nil && c.Request.Context().Err() != nil {
+	if requestContextDone(c) {
 		return fmt.Errorf("request context done: %w", c.Request.Context().Err())
 	}
 
