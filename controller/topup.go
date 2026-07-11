@@ -497,6 +497,27 @@ type AdminCompleteTopupRequest struct {
 	TradeNo string `json:"trade_no"`
 }
 
+type CancelTopUpRequest struct {
+	TradeNo string `json:"trade_no"`
+}
+
+// CancelTopUp 用户主动取消待支付订单
+func CancelTopUp(c *gin.Context) {
+	var req CancelTopUpRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.TradeNo == "" {
+		common.ApiErrorMsg(c, "参数错误")
+		return
+	}
+
+	userId := c.GetInt("id")
+	if err := model.CancelTopUpByUser(req.TradeNo, userId); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+
+	common.ApiSuccess(c, nil)
+}
+
 // AdminCompleteTopUp 管理员补单接口
 func AdminCompleteTopUp(c *gin.Context) {
 	var req AdminCompleteTopupRequest

@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -44,6 +45,50 @@ func HasPendingFirstRechargeDiscountTopUp(userId int) (bool, error) {
 		Where("user_id = ? AND status = ? AND first_recharge_discount_applied = ?", userId, common.TopUpStatusPending, true).
 		Count(&count).Error
 	return count > 0, err
+}
+
+// CancelTopUpByUser 用户主动取消自己的待支付订单，释放待支付占用。
+func CancelTopUpByUser(tradeNo string, userId int) error {
+	if tradeNo == "" {
+		return errors.New("未提供订单号")
+	}
+
+	return DB.Transaction(func(tx *gorm.DB) error {
+		topUp := &TopUp{}
+		if err := tx.Where("trade_no = ? AND user_id = ?", tradeNo, userId).First(topUp).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("订单不存在")
+			}
+			return err
+		}
+
+		if topUp.Status != common.TopUpStatusPending {
+			return errors.New("订单状态不是待支付，无法取消")
+		}
+
+		topUp.Status = common.TopUpStatusExpired
+		topUp.CompleteTime = common.GetTimestamp()
+		return tx.Save(topUp).Error
+	})
+}
+
+// ExpireStalePendingTopUps 将超过指定时间的待支付订单标记为过期，防止未支付订单永久占用。
+func ExpireStalePendingTopUps(maxAge time.Duration, batchSize int) (int64, error) {
+	if maxAge <= 0 {
+		return 0, nil
+	}
+	if batchSize <= 0 {
+		batchSize = 100
+	}
+	deadline := common.GetTimestamp() - int64(maxAge.Seconds())
+	result := DB.Model(&TopUp{}).
+		Where("status = ? AND create_time < ?", common.TopUpStatusPending, deadline).
+		Limit(batchSize).
+		Updates(map[string]interface{}{
+			"status":        common.TopUpStatusExpired,
+			"complete_time": common.GetTimestamp(),
+		})
+	return result.RowsAffected, result.Error
 }
 
 func GetTopUpById(id int) *TopUp {

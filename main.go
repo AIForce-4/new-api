@@ -113,6 +113,9 @@ func main() {
 	// Subscription quota reset task (daily/weekly/monthly/custom)
 	service.StartSubscriptionQuotaResetTask()
 
+	// Stale pending top-up expire task
+	service.StartStaleTopUpExpireTask()
+
 	// Provider wallet balance check task
 	service.StartProviderWalletCheckTask()
 
