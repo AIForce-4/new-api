@@ -12,6 +12,11 @@ IMAGE_TAG="${IMAGE_TAG:-linux-amd64}"
 DOCKERFILE="${DOCKERFILE:-${ROOT_DIR}/Dockerfile}"
 BUILD_DIR="${ROOT_DIR}/tmp-build"
 IMAGE_REF="${IMAGE_NAME}:${IMAGE_TAG}"
+
+# 生成版本标签：日期 + git 短哈希，用于服务器端镜像版本化和回滚
+VERSION_TAG="${VERSION_TAG:-$(date +%Y%m%d)-$(git -C "${ROOT_DIR}" rev-parse --short HEAD)}"
+BUILD_TAR_NAME="new-api-build-${VERSION_TAG}.tar.gz"
+BUILD_TAR="${BUILD_DIR}/${BUILD_TAR_NAME}"
 SCP_TARGET="${SSH_USER}@${HOST}:${REMOTE_PATH}/"
 
 require_command() {
@@ -82,18 +87,19 @@ ENTRYPOINT ["/new-api"]
 EOF
 
 echo "==> 打包构建文件"
-tar czf "$BUILD_DIR/new-api-build.tar.gz" -C "$BUILD_DIR" new-api Dockerfile
+tar czf "$BUILD_TAR" -C "$BUILD_DIR" new-api Dockerfile
 
-if [ ! -s "$BUILD_DIR/new-api-build.tar.gz" ]; then
+if [ ! -s "$BUILD_TAR" ]; then
   echo "打包失败" >&2
   exit 1
 fi
 
 echo "==> 上传到服务器: $SCP_TARGET"
 echo "请输入服务器密码:"
-scp "$BUILD_DIR/new-api-build.tar.gz" "$SCP_TARGET"
+scp "$BUILD_TAR" "$SCP_TARGET"
 
 echo ""
 echo "==> 完成"
-echo "已上传: ${REMOTE_PATH}/new-api-build.tar.gz"
-echo "请在服务器执行: bash ${REMOTE_PATH}/deploy.sh"
+echo "已上传: ${REMOTE_PATH}/${BUILD_TAR_NAME}"
+echo "版本标签: ${VERSION_TAG}"
+echo "请在服务器执行: bash ${REMOTE_PATH}/deploy.sh production ${VERSION_TAG}"
