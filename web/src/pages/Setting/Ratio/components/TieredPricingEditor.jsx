@@ -69,6 +69,7 @@ function priceToUnitCost(price) {
 
 const OPS = ['<', '<=', '>', '>='];
 const VAR_OPTIONS = [
+  { value: 'len', label: 'len (长度)' },
   { value: 'p', label: 'p (输入)' },
   { value: 'c', label: 'c (输出)' },
 ];
@@ -203,6 +204,8 @@ function generateExprFromVisualConfig(config) {
 function tryParseVisualConfig(exprStr) {
   if (!exprStr) return null;
   try {
+    const versionMatch = exprStr.match(/^v\d+:([\s\S]*)$/);
+    if (versionMatch) exprStr = versionMatch[1];
     const cacheVarNames = CACHE_VAR_MAP.map((cv) => cv.exprVar);
     const optCacheStr = cacheVarNames
       .map((v) => `(?:\\s*\\+\\s*${v}\\s*\\*\\s*([\\d.eE+-]+))?`)
@@ -229,7 +232,7 @@ function tryParseVisualConfig(exprStr) {
     }
 
     // Multi-tier: cond1 ? tier(body) : cond2 ? tier(body) : tier(body)
-    const condGroup = `((?:(?:p|c)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)(?:\\s*&&\\s*(?:p|c)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)*)`;
+    const condGroup = `((?:(?:p|c|len)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)(?:\\s*&&\\s*(?:p|c|len)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)*)`;
     const tierRe = new RegExp(
       `(?:${condGroup}\\s*\\?\\s*)?tier\\("([^"]*)",\\s*${bodyPat}\\)`,
       'g',
@@ -242,7 +245,7 @@ function tryParseVisualConfig(exprStr) {
       if (condStr) {
         const condParts = condStr.split(/\s*&&\s*/);
         for (const cp of condParts) {
-          const cm = cp.trim().match(/^(p|c)\s*(<|<=|>|>=)\s*([\d.eE+]+)$/);
+          const cm = cp.trim().match(/^(p|c|len)\s*(<|<=|>|>=)\s*([\d.eE+]+)$/);
           if (cm) {
             conditions.push({ var: cm[1], op: cm[2], value: Number(cm[3]) });
           }
@@ -288,7 +291,7 @@ function ConditionRow({ cond, onChange, onRemove, t }) {
     }}>
       <Select
         size='small'
-        value={cond.var || 'p'}
+        value={cond.var || 'len'}
         onChange={(val) => onChange({ ...cond, var: val })}
       >
         {VAR_OPTIONS.map((v) => (
@@ -508,7 +511,7 @@ function ExtendedPriceBlock({ tier, index, onUpdate, t }) {
 function VisualTierCard({ tier, index, isLast, isOnly, onUpdate, onRemove, t }) {
   const conditions = tier.conditions || [];
 
-  const varLabel = { p: t('输入'), c: t('输出') };
+  const varLabel = { len: t('长度'), p: t('输入'), c: t('输出') };
   const condSummary = useMemo(() => {
     if (conditions.length === 0) return t('无条件（兜底档）');
     return conditions
@@ -533,7 +536,11 @@ function VisualTierCard({ tier, index, isLast, isOnly, onUpdate, onRemove, t }) 
   const addCondition = () => {
     if (conditions.length >= 2) return;
     const usedVars = conditions.map((c) => c.var);
-    const nextVar = usedVars.includes('p') ? 'c' : 'p';
+    const nextVar = !usedVars.includes('len')
+      ? 'len'
+      : usedVars.includes('p')
+        ? 'c'
+        : 'p';
     onUpdate(index, 'conditions', [
       ...conditions,
       { var: nextVar, op: '<', value: 200000 },
@@ -702,7 +709,7 @@ function VisualEditor({ visualConfig, onChange, t }) {
     ) {
       newTiers[newTiers.length - 1] = {
         ...newTiers[newTiers.length - 1],
-        conditions: [{ var: 'p', op: '<', value: 200000 }],
+        conditions: [{ var: 'len', op: '<', value: 200000 }],
       };
     }
     newTiers.push({
@@ -770,16 +777,16 @@ const PRESET_GROUPS = [
     presets: [
       { key: 'flat', label: 'Flat', expr: 'tier("base", p * 2 + c * 4)' },
       { key: 'claude-opus', label: 'Claude Opus 4.6', expr: 'tier("base", p * 5 + c * 25 + cr * 0.5 + cc * 6.25 + cc1h * 10)' },
-      { key: 'gpt-5.4', label: 'GPT-5.4', expr: 'p <= 272000 ? tier("standard", p * 2.5 + c * 15 + cr * 0.25) : tier("long_context", p * 5 + c * 22.5 + cr * 0.5)' },
+      { key: 'gpt-5.4', label: 'GPT-5.4', expr: 'len <= 272000 ? tier("standard", p * 2.5 + c * 15 + cr * 0.25) : tier("long_context", p * 5 + c * 22.5 + cr * 0.5)' },
     ],
   },
   {
     group: '阶梯计费',
     presets: [
-      { key: 'claude-sonnet', label: 'Claude Sonnet 4.5', expr: 'p <= 200000 ? tier("standard", p * 3 + c * 15 + cr * 0.3 + cc * 3.75 + cc1h * 6) : tier("long_context", p * 6 + c * 22.5 + cr * 0.6 + cc * 7.5 + cc1h * 12)' },
-      { key: 'qwen3-max', label: 'Qwen3 Max', expr: 'p <= 32000 ? tier("short", p * 1.2 + c * 6 + cr * 0.24 + cc * 1.5) : p <= 128000 ? tier("mid", p * 2.4 + c * 12 + cr * 0.48 + cc * 3) : tier("long", p * 3 + c * 15 + cr * 0.6 + cc * 3.75)' },
-      { key: 'glm-4.5-air', label: 'GLM-4.5 Air', expr: 'p < 32000 && c < 200 ? tier("short_output", p * 0.8 + c * 2 + cr * 0.16) : p < 32000 && c >= 200 ? tier("long_output", p * 0.8 + c * 6 + cr * 0.16) : tier("mid_context", p * 1.2 + c * 8 + cr * 0.24)' },
-      { key: 'doubao-seed-1.8', label: 'Doubao Seed 1.8', expr: 'p <= 32000 && c <= 200 ? tier("discount", p * 0.8 + c * 2 + cr * 0.16 + cc * 0.17) : p <= 32000 ? tier("short", p * 0.8 + c * 8 + cr * 0.16 + cc * 0.17) : p <= 128000 ? tier("mid", p * 1.2 + c * 16 + cr * 0.16 + cc * 0.17) : tier("long", p * 2.4 + c * 24 + cr * 0.16 + cc * 0.17)' },
+      { key: 'claude-sonnet', label: 'Claude Sonnet 4.5', expr: 'len <= 200000 ? tier("standard", p * 3 + c * 15 + cr * 0.3 + cc * 3.75 + cc1h * 6) : tier("long_context", p * 6 + c * 22.5 + cr * 0.6 + cc * 7.5 + cc1h * 12)' },
+      { key: 'qwen3-max', label: 'Qwen3 Max', expr: 'len <= 32000 ? tier("short", p * 1.2 + c * 6 + cr * 0.24 + cc * 1.5) : len <= 128000 ? tier("mid", p * 2.4 + c * 12 + cr * 0.48 + cc * 3) : tier("long", p * 3 + c * 15 + cr * 0.6 + cc * 3.75)' },
+      { key: 'glm-4.5-air', label: 'GLM-4.5 Air', expr: 'len < 32000 && c < 200 ? tier("short_output", p * 0.8 + c * 2 + cr * 0.16) : len < 32000 && c >= 200 ? tier("long_output", p * 0.8 + c * 6 + cr * 0.16) : tier("mid_context", p * 1.2 + c * 8 + cr * 0.24)' },
+      { key: 'doubao-seed-1.8', label: 'Doubao Seed 1.8', expr: 'len <= 32000 && c <= 200 ? tier("discount", p * 0.8 + c * 2 + cr * 0.16 + cc * 0.17) : len <= 32000 ? tier("short", p * 0.8 + c * 8 + cr * 0.16 + cc * 0.17) : len <= 128000 ? tier("mid", p * 1.2 + c * 16 + cr * 0.16 + cc * 0.17) : tier("long", p * 2.4 + c * 24 + cr * 0.16 + cc * 0.17)' },
     ],
   },
   {
@@ -801,7 +808,7 @@ const PRESET_GROUPS = [
       },
       {
         key: 'gpt-5.4-tiers', label: 'GPT-5.4 Priority/Flex',
-        expr: 'p <= 272000 ? tier("standard", p * 2.5 + c * 15 + cr * 0.25) : tier("long_context", p * 5 + c * 22.5 + cr * 0.5)',
+        expr: 'len <= 272000 ? tier("standard", p * 2.5 + c * 15 + cr * 0.25) : tier("long_context", p * 5 + c * 22.5 + cr * 0.5)',
         requestRules: [
           { conditions: [{ source: SOURCE_PARAM, path: 'service_tier', mode: MATCH_EQ, value: 'priority' }], multiplier: '2' },
           { conditions: [{ source: SOURCE_PARAM, path: 'service_tier', mode: MATCH_EQ, value: 'flex' }], multiplier: '0.5' },
@@ -888,7 +895,8 @@ function RawExprEditor({ exprString, onChange, t }) {
           <div>
             <div>
               {t('变量')}: <code>p</code> ({t('输入 Token')}), <code>c</code> (
-              {t('输出 Token')}), <code>cr</code> ({t('缓存读取')}),{' '}
+              {t('输出 Token')}), <code>len</code> ({t('输入长度')}),{' '}
+              <code>cr</code> ({t('缓存读取')}),{' '}
               <code>cc</code> ({t('缓存创建')}),{' '}
               <code>cc1h</code> ({t('缓存创建-1小时')})
             </div>
@@ -924,6 +932,7 @@ const EXTRA_ESTIMATOR_FIELDS = [
   { var: 'cc', stateKey: 'cacheCreateTokens', labelKey: '缓存创建 Token (cc)' },
   { var: 'cc1h', stateKey: 'cacheCreate1hTokens', labelKey: '缓存创建-1小时 (cc1h)' },
   { var: 'img', stateKey: 'imageTokens', labelKey: '图片输入 Token (img)' },
+  { var: 'img_o', stateKey: 'imageOutputTokens', labelKey: '图片输出 Token (img_o)' },
   { var: 'ai', stateKey: 'audioInputTokens', labelKey: '音频输入 Token (ai)' },
   { var: 'ao', stateKey: 'audioOutputTokens', labelKey: '音频补全 Token (ao)' },
 ];
@@ -934,6 +943,7 @@ function CacheTokenEstimatorInputs({
   cacheCreateTokens, setCacheCreateTokens,
   cacheCreate1hTokens, setCacheCreate1hTokens,
   imageTokens, setImageTokens,
+  imageOutputTokens, setImageOutputTokens,
   audioInputTokens, setAudioInputTokens,
   audioOutputTokens, setAudioOutputTokens,
   t,
@@ -943,6 +953,7 @@ function CacheTokenEstimatorInputs({
     cacheCreateTokens: setCacheCreateTokens,
     cacheCreate1hTokens: setCacheCreate1hTokens,
     imageTokens: setImageTokens,
+    imageOutputTokens: setImageOutputTokens,
     audioInputTokens: setAudioInputTokens,
     audioOutputTokens: setAudioOutputTokens,
   };
@@ -951,13 +962,14 @@ function CacheTokenEstimatorInputs({
     cacheCreateTokens,
     cacheCreate1hTokens,
     imageTokens,
+    imageOutputTokens,
     audioInputTokens,
     audioOutputTokens,
   };
 
   const usesExtra = useMemo(() => {
     if (!effectiveExpr) return false;
-    return /\b(cr|cc1h|cc|img|ai|ao)\b/.test(effectiveExpr);
+    return /\b(cr|cc1h|cc|img_o|img|ai|ao)\b/.test(effectiveExpr);
   }, [effectiveExpr]);
 
   if (!usesExtra) return null;
@@ -992,20 +1004,25 @@ function CacheTokenEstimatorInputs({
 // Cost estimator (works with any Expr string)
 // ---------------------------------------------------------------------------
 
-function evalExprLocally(exprStr, p, c, cr, cc, cc1h, img, ai, ao) {
+function evalExprLocally(exprStr, p, c, cr, cc, cc1h, img, ai, ao, imgO) {
   try {
     let matchedTier = '';
     const tierFn = (name, value) => {
       matchedTier = name;
       return value;
     };
+    // len = total input context length for tier conditions; unlike p it is
+    // never reduced by sub-category exclusion (mirrors backend semantics).
+    const len = (p || 0) + (cr || 0) + (cc || 0) + (cc1h || 0);
     const env = {
       p,
       c,
+      len,
       cr: cr || 0,
       cc: cc || 0,
       cc1h: cc1h || 0,
       img: img || 0,
+      img_o: imgO || 0,
       ai: ai || 0,
       ao: ao || 0,
       prompt_tokens: p,
@@ -1287,6 +1304,7 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
   const [cacheCreateTokens, setCacheCreateTokens] = useState(0);
   const [cacheCreate1hTokens, setCacheCreate1hTokens] = useState(0);
   const [imageTokens, setImageTokens] = useState(0);
+  const [imageOutputTokens, setImageOutputTokens] = useState(0);
   const [audioInputTokens, setAudioInputTokens] = useState(0);
   const [audioOutputTokens, setAudioOutputTokens] = useState(0);
 
@@ -1399,11 +1417,11 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
     () => evalExprLocally(
       effectiveExpr, promptTokens, completionTokens,
       cacheReadTokens, cacheCreateTokens, cacheCreate1hTokens,
-      imageTokens, audioInputTokens, audioOutputTokens,
+      imageTokens, audioInputTokens, audioOutputTokens, imageOutputTokens,
     ),
     [effectiveExpr, promptTokens, completionTokens,
       cacheReadTokens, cacheCreateTokens, cacheCreate1hTokens,
-      imageTokens, audioInputTokens, audioOutputTokens],
+      imageTokens, audioInputTokens, audioOutputTokens, imageOutputTokens],
   );
 
   return (
@@ -1544,6 +1562,8 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
           setCacheCreate1hTokens={setCacheCreate1hTokens}
           imageTokens={imageTokens}
           setImageTokens={setImageTokens}
+          imageOutputTokens={imageOutputTokens}
+          setImageOutputTokens={setImageOutputTokens}
           audioInputTokens={audioInputTokens}
           setAudioInputTokens={setAudioInputTokens}
           audioOutputTokens={audioOutputTokens}

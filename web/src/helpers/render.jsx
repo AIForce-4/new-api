@@ -2228,7 +2228,9 @@ function parseTierBody(bodyStr) {
 export function parseTiersFromExpr(exprStr) {
   if (!exprStr) return [];
   try {
-    const condGroup = `((?:(?:p|c)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)(?:\\s*&&\\s*(?:p|c)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)*)`;
+    const versionMatch = exprStr.match(/^v\d+:([\s\S]*)$/);
+    if (versionMatch) exprStr = versionMatch[1];
+    const condGroup = `((?:(?:p|c|len)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)(?:\\s*&&\\s*(?:p|c|len)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)*)`;
     const tierRe = new RegExp(`(?:${condGroup}\\s*\\?\\s*)?tier\\("([^"]*)",\\s*([^)]+)\\)`, 'g');
     const tiers = [];
     let m;
@@ -2237,7 +2239,7 @@ export function parseTiersFromExpr(exprStr) {
       const conditions = [];
       if (condStr) {
         for (const cp of condStr.split(/\s*&&\s*/)) {
-          const cm = cp.trim().match(/^(p|c)\s*(<|<=|>|>=)\s*([\d.eE+]+)$/);
+          const cm = cp.trim().match(/^(p|c|len)\s*(<|<=|>|>=)\s*([\d.eE+]+)$/);
           if (cm) conditions.push({ var: cm[1], op: cm[2], value: Number(cm[3]) });
         }
       }
