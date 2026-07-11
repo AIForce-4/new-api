@@ -37,7 +37,7 @@ const { Text } = Typography;
 
 const PRICE_SUFFIX = '$/1M tokens';
 
-const VAR_LABELS = { p: '输入', c: '输出' };
+const VAR_LABELS = { len: '长度', p: '输入', c: '输出' };
 const OP_LABELS = { '<': '<', '<=': '≤', '>': '>', '>=': '≥' };
 const TIME_FUNC_LABELS = { hour: '小时', minute: '分钟', weekday: '星期', month: '月份', day: '日期' };
 

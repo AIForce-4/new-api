@@ -29,6 +29,7 @@ var (
 var compileEnvPrototype = map[string]interface{}{
 	"p":                      float64(0),
 	"c":                      float64(0),
+	"len":                    float64(0),
 	"cr":                     float64(0),
 	"cc":                     float64(0),
 	"cc1h":                   float64(0),
@@ -38,6 +39,7 @@ var compileEnvPrototype = map[string]interface{}{
 	"cache_create_tokens":    float64(0),
 	"cache_create_1h_tokens": float64(0),
 	"img":                    float64(0),
+	"img_o":                  float64(0),
 	"ai":                     float64(0),
 	"ao":                     float64(0),
 	"image_tokens":           float64(0),
