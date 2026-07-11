@@ -23,6 +23,7 @@ docker run -d \
   -v "${DATA_DIR}:/data" \
   -e TZ=Asia/Shanghai \
   -e SESSION_SECRET="$SESSION_SECRET" \
+  -e ERROR_LOG_ENABLED=true \
   "${IMAGE_NAME}:${IMAGE_TAG}"
 
 echo "==> 清理旧镜像"
