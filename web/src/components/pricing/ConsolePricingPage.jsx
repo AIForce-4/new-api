@@ -6,7 +6,6 @@ import { useIsMobile } from '../../hooks/common/useIsMobile';
 
 const PRODUCT_ICONS = {
   claude: Claude.Color,
-  codex: OpenAI,
   openai: OpenAI,
 };
 
