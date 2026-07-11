@@ -19,6 +19,7 @@ import {
   stringToColor,
   calculateModelPrice,
   formatPriceInfo,
+  formatDynamicPriceSummary,
   getLobeHubIcon,
 } from '../../../../../helpers';
 import PricingCardSkeleton from './PricingCardSkeleton';
@@ -248,7 +249,11 @@ const PricingCardView = ({
                         {model.model_name}
                       </h3>
                       <div className='flex flex-col gap-1 text-xs mt-1'>
-                        {formatPriceInfo(priceData, t, siteDisplayType)}
+                        {priceData.isDynamicPricing ? (
+                          formatDynamicPriceSummary(priceData.billingExpr, t, priceData.usedGroupRatio)
+                        ) : (
+                          formatPriceInfo(priceData, t, siteDisplayType)
+                        )}
                       </div>
                     </div>
                   </div>
