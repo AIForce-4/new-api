@@ -287,11 +287,18 @@ func TestQuotaRound(t *testing.T) {
 		{0.5, 1},
 		{0.6, 1},
 		{1.5, 2},
-		{-0.5, -1},
-		{-0.6, -1},
+		// quota is never negative: negatives saturate to 0
+		{-0.5, 0},
+		{-0.6, 0},
+		{-1e9, 0},
 		{999.4999, 999},
 		{999.5, 1000},
 		{1e9 + 0.5, 1e9 + 1},
+		// non-finite and overflow saturate instead of producing garbage ints
+		{math.NaN(), 0},
+		{math.Inf(1), math.MaxInt32},
+		{math.Inf(-1), 0},
+		{1e18, math.MaxInt32},
 	}
 	for _, tt := range tests {
 		got := billingexpr.QuotaRound(tt.in)
