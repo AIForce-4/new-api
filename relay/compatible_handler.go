@@ -491,9 +491,18 @@ func postConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage 
 		other["image_generation_call"] = true
 		other["image_generation_call_price"] = imageGenerationCallPrice
 	}
+	// 日志展示更直观：OpenAI 语义下 prompt_tokens 包含缓存，记录时减去缓存部分
+	logPromptTokens := promptTokens
+	if !isClaudeUsageSemantic {
+		logPromptTokens = promptTokens - cacheTokens - cachedCreationTokens
+		if logPromptTokens < 0 {
+			logPromptTokens = 0
+		}
+	}
+
 	model.RecordConsumeLog(ctx, relayInfo.UserId, model.RecordConsumeLogParams{
 		ChannelId:        relayInfo.ChannelId,
-		PromptTokens:     promptTokens,
+		PromptTokens:     logPromptTokens,
 		CompletionTokens: completionTokens,
 		ModelName:        logModel,
 		TokenName:        tokenName,

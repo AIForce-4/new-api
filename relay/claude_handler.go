@@ -21,6 +21,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func normalizeUsageForClaudeBilling(usage *dto.Usage) *dto.Usage {
+	if usage == nil {
+		return nil
+	}
+	// OpenAI 语义下 prompt_tokens 包含缓存；PostClaudeConsumeQuota 按 Claude 语义预期 prompt_tokens 不含缓存。
+	// 把缓存部分从 prompt_tokens 中剔除，避免缓存同时按普通输入和缓存价格重复计费。
+	normalized := *usage
+	normalized.PromptTokens -= normalized.PromptTokensDetails.CachedTokens
+	normalized.PromptTokens -= normalized.PromptTokensDetails.CachedCreationTokens
+	if normalized.PromptTokens < 0 {
+		normalized.PromptTokens = 0
+	}
+	return &normalized
+}
+
 func ClaudeHelper(c *gin.Context, info *relaycommon.RelayInfo) (newAPIError *types.NewAPIError) {
 
 	info.InitChannelMeta(c)
@@ -122,6 +137,10 @@ func ClaudeHelper(c *gin.Context, info *relaycommon.RelayInfo) (newAPIError *typ
 			return newApiErr
 		}
 
+		// 当上游是 OpenAI 语义（prompt_tokens 含缓存）时，转成 Claude 语义后再计费
+		if info.ApiType != constant.APITypeAnthropic && info.ApiType != constant.APITypeOpenRouter {
+			usage = normalizeUsageForClaudeBilling(usage)
+		}
 		service.PostClaudeConsumeQuota(c, info, usage)
 		return nil
 	}
@@ -190,6 +209,11 @@ func ClaudeHelper(c *gin.Context, info *relaycommon.RelayInfo) (newAPIError *typ
 		return newAPIError
 	}
 
-	service.PostClaudeConsumeQuota(c, info, usage.(*dto.Usage))
+	usageDto := usage.(*dto.Usage)
+	// 当上游是 OpenAI 语义（prompt_tokens 含缓存）时，转成 Claude 语义后再计费
+	if info.ApiType != constant.APITypeAnthropic && info.ApiType != constant.APITypeOpenRouter {
+		usageDto = normalizeUsageForClaudeBilling(usageDto)
+	}
+	service.PostClaudeConsumeQuota(c, info, usageDto)
 	return nil
 }
