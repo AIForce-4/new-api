@@ -74,6 +74,10 @@ var MemoryCacheEnabled bool
 
 var LogConsumeEnabled = true
 
+// RecordIpLogEnabled 全局开关：开启后，所有用户的"消费"和"错误"日志都会记录客户端 IP，
+// 供管理员查看（普通用户接口会脱敏）。默认关闭。
+var RecordIpLogEnabled = false
+
 var TLSInsecureSkipVerify bool
 var InsecureTLSConfig = &tls.Config{InsecureSkipVerify: true}
 

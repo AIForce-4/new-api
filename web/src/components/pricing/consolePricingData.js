@@ -196,14 +196,43 @@ export const CONSOLE_PRICING_PRODUCTS = [
         {
           key: 'gpt-56-sol',
           cells: [
-            { label: '模型名称', content: 'gpt-5.6-sol', strong: true },
-            { label: '输入价格', content: '$5.00 / 1M tokens' },
-            { label: '输出价格', content: '$30.00 / 1M tokens' },
-            { label: '缓存创建', content: '$6.25 / 1M tokens' },
-            { label: '缓存读取', content: '$0.5 / 1M tokens' },
+            {
+              label: '模型名称',
+              content: 'gpt-5.6-sol',
+              strong: true,
+              badge: '动态计费',
+            },
+            {
+              label: '输入价格',
+              tiers: [
+                { label: '≤272K', content: '$5.00 / 1M tokens' },
+                { label: '>272K', content: '$10.00 / 1M tokens' },
+              ],
+            },
+            {
+              label: '输出价格',
+              tiers: [
+                { label: '≤272K', content: '$30.00 / 1M tokens' },
+                { label: '>272K', content: '$45.00 / 1M tokens' },
+              ],
+            },
+            {
+              label: '缓存创建',
+              tiers: [
+                { label: '≤272K', content: '$6.25 / 1M tokens' },
+                { label: '>272K', content: '$12.50 / 1M tokens' },
+              ],
+            },
+            {
+              label: '缓存读取',
+              tiers: [
+                { label: '≤272K', content: '$0.5 / 1M tokens' },
+                { label: '>272K', content: '$1.00 / 1M tokens' },
+              ],
+            },
             {
               label: '描述',
-              content: '旗舰，最强',
+              content: '顶级性能，适合复杂推理',
               muted: true,
             },
           ],
@@ -211,14 +240,43 @@ export const CONSOLE_PRICING_PRODUCTS = [
         {
           key: 'gpt-56-terra',
           cells: [
-            { label: '模型名称', content: 'gpt-5.6-terra', strong: true },
-            { label: '输入价格', content: '$2.5 / 1M tokens' },
-            { label: '输出价格', content: '$15.00 / 1M tokens' },
-            { label: '缓存创建', content: '$3.125 / 1M tokens' },
-            { label: '缓存读取', content: '$0.25 / 1M tokens' },
+            {
+              label: '模型名称',
+              content: 'gpt-5.6-terra',
+              strong: true,
+              badge: '动态计费',
+            },
+            {
+              label: '输入价格',
+              tiers: [
+                { label: '≤272K', content: '$2.5 / 1M tokens' },
+                { label: '>272K', content: '$5.00 / 1M tokens' },
+              ],
+            },
+            {
+              label: '输出价格',
+              tiers: [
+                { label: '≤272K', content: '$15.00 / 1M tokens' },
+                { label: '>272K', content: '$22.50 / 1M tokens' },
+              ],
+            },
+            {
+              label: '缓存创建',
+              tiers: [
+                { label: '≤272K', content: '$3.125 / 1M tokens' },
+                { label: '>272K', content: '$6.25 / 1M tokens' },
+              ],
+            },
+            {
+              label: '缓存读取',
+              tiers: [
+                { label: '≤272K', content: '$0.25 / 1M tokens' },
+                { label: '>272K', content: '$0.5 / 1M tokens' },
+              ],
+            },
             {
               label: '描述',
-              content: '较低成本强模型',
+              content: '性能均衡，适合通用场景',
               muted: true,
             },
           ],
@@ -226,14 +284,43 @@ export const CONSOLE_PRICING_PRODUCTS = [
         {
           key: 'gpt-56-luna',
           cells: [
-            { label: '模型名称', content: 'gpt-5.6-luna', strong: true },
-            { label: '输入价格', content: '$1.00 / 1M tokens' },
-            { label: '输出价格', content: '$6.00 / 1M tokens' },
-            { label: '缓存创建', content: '$1.25 / 1M tokens' },
-            { label: '缓存读取', content: '$0.1 / 1M tokens' },
+            {
+              label: '模型名称',
+              content: 'gpt-5.6-luna',
+              strong: true,
+              badge: '动态计费',
+            },
+            {
+              label: '输入价格',
+              tiers: [
+                { label: '≤272K', content: '$1.00 / 1M tokens' },
+                { label: '>272K', content: '$2.00 / 1M tokens' },
+              ],
+            },
+            {
+              label: '输出价格',
+              tiers: [
+                { label: '≤272K', content: '$6.00 / 1M tokens' },
+                { label: '>272K', content: '$9.00 / 1M tokens' },
+              ],
+            },
+            {
+              label: '缓存创建',
+              tiers: [
+                { label: '≤272K', content: '$1.25 / 1M tokens' },
+                { label: '>272K', content: '$2.50 / 1M tokens' },
+              ],
+            },
+            {
+              label: '缓存读取',
+              tiers: [
+                { label: '≤272K', content: '$0.1 / 1M tokens' },
+                { label: '>272K', content: '$0.2 / 1M tokens' },
+              ],
+            },
             {
               label: '描述',
-              content: '最快、最便宜',
+              content: '轻量高效，适合低成本调用',
               muted: true,
             },
           ],
