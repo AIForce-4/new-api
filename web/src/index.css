@@ -2068,6 +2068,75 @@ html.dark .sidebar-nav .semi-navigation-sub-title-selected {
   color: var(--app-text-muted);
 }
 
+.console-model-pricing__name-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.console-model-pricing__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--console-pricing-accent);
+  background: color-mix(in srgb, var(--console-pricing-accent) 12%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--console-pricing-accent) 28%, transparent);
+}
+
+.console-model-pricing__tiers {
+  display: flex;
+  flex-direction: column;
+}
+
+.console-model-pricing__tier {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.console-model-pricing__tier + .console-model-pricing__tier {
+  border-top: 1px dashed
+    color-mix(in srgb, var(--app-border) 85%, transparent);
+}
+
+.console-model-pricing__tier:first-child {
+  padding-top: 0;
+}
+
+.console-model-pricing__tier:last-child {
+  padding-bottom: 0;
+}
+
+.console-model-pricing__tier-label {
+  flex-shrink: 0;
+  min-width: 52px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--app-text-subtle);
+  background: color-mix(in srgb, var(--app-text-subtle) 10%, transparent);
+}
+
+.console-model-pricing__tier-label--high {
+  color: var(--console-pricing-accent);
+  background: color-mix(in srgb, var(--console-pricing-accent) 12%, transparent);
+}
+
+.console-model-pricing__tier-value {
+  color: var(--app-text);
+  font-variant-numeric: tabular-nums;
+}
+
 .console-model-pricing__channel-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

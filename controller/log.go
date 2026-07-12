@@ -47,6 +47,17 @@ func GetUserLogs(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	// IP 脱敏：普通用户仅在自己开启了 IP 记录时才能看到自己日志的 IP。
+	// 若 IP 是因全局开关而记录的（用户本人未开启），则对普通用户隐藏。
+	userRecordIp := false
+	if settingMap, settingErr := model.GetUserSetting(userId, false); settingErr == nil {
+		userRecordIp = settingMap.RecordIpLog
+	}
+	if !userRecordIp {
+		for _, log := range logs {
+			log.Ip = ""
+		}
+	}
 	pageInfo.SetTotal(int(total))
 	pageInfo.SetItems(logs)
 	common.ApiSuccess(c, pageInfo)

@@ -47,16 +47,59 @@ const renderFullFormulaContent = (content) => {
   );
 };
 
-const renderCellContent = (cell) =>
-  cell.accent ? (
-    <span className='console-model-pricing__accent-value'>{cell.content}</span>
-  ) : cell.label === '公式内容' &&
+const renderTieredContent = (tiers) => (
+  <div className='console-model-pricing__tiers'>
+    {tiers.map((tier, index) => (
+      <div
+        key={`${tier.label}-${index}`}
+        className='console-model-pricing__tier'
+      >
+        <span
+          className={[
+            'console-model-pricing__tier-label',
+            index > 0 ? 'console-model-pricing__tier-label--high' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {tier.label}
+        </span>
+        <span className='console-model-pricing__tier-value'>{tier.content}</span>
+      </div>
+    ))}
+  </div>
+);
+
+const renderCellContent = (cell) => {
+  if (Array.isArray(cell.tiers)) {
+    return renderTieredContent(cell.tiers);
+  }
+
+  if (cell.accent) {
+    return (
+      <span className='console-model-pricing__accent-value'>{cell.content}</span>
+    );
+  }
+
+  if (
+    cell.label === '公式内容' &&
     typeof cell.content === 'string' &&
-    cell.content.includes('渠道折扣') ? (
-    renderFullFormulaContent(cell.content)
-  ) : (
-    cell.content
-  );
+    cell.content.includes('渠道折扣')
+  ) {
+    return renderFullFormulaContent(cell.content);
+  }
+
+  if (cell.badge) {
+    return (
+      <span className='console-model-pricing__name-wrap'>
+        <span>{cell.content}</span>
+        <span className='console-model-pricing__badge'>{cell.badge}</span>
+      </span>
+    );
+  }
+
+  return cell.content;
+};
 
 const SectionCard = ({ title, badge, children }) => (
   <section className='console-model-pricing__section-card'>
