@@ -1,7 +1,25 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@douyinfe/semi-ui';
 import { IconGithubLogo } from '@douyinfe/semi-icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   BadgeCheck,
@@ -16,20 +34,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
 import { UserContext } from '../../context/User';
-import {
-  SUBSCRIPTION_PLAN_DEFINITIONS,
-  formatPricingAmount,
-  getSubscriptionPlanDiscountLabel,
-  getSubscriptionPlanQuota,
-} from '../../constants';
+import { API } from '../../helpers';
+import { getQuotaPerUnit } from '../../helpers/quota';
+import { sortSubscriptionPlansByDiscount } from '../../helpers/subscriptionFormat';
+import SubscriptionPlanTile from '../topup/SubscriptionPlanTile';
 import { OpenAI, Claude, Gemini } from '../../helpers/lobeIcons';
 
-const ScrollReveal = ({
-  as = 'div',
-  children,
-  className = '',
-  delay = 0,
-}) => {
+const ScrollReveal = ({ as = 'div', children, className = '', delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const elementRef = useRef(null);
   const Component = as;
@@ -98,6 +109,7 @@ const ScrollReveal = ({
 
 const MarketingHome = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [statusState] = useContext(StatusContext);
   const [userState] = useContext(UserContext);
 
@@ -115,6 +127,25 @@ const MarketingHome = () => {
       ? t('登录')
       : t('免费使用');
   const plansActionTo = userState?.user ? '/console/topup' : '/login';
+
+  // 从公开接口加载真实订阅套餐（无需登录）
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    API.get('/api/subscription/public_plans')
+      .then((res) => {
+        if (cancelled) return;
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          setSubscriptionPlans(res.data.data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSubscriptionPlans([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const heroMetrics = useMemo(
     () => [
@@ -188,9 +219,7 @@ const MarketingHome = () => {
       {
         eyebrow: t('轻便&快速'),
         title: t('Haiku 俳句'),
-        description: t(
-          '我们最快的模型，可以执行轻量级动作，速度业界领先。',
-        ),
+        description: t('我们最快的模型，可以执行轻量级动作，速度业界领先。'),
         toneClassName: 'marketing-architecture-card--left',
       },
       {
@@ -217,32 +246,22 @@ const MarketingHome = () => {
     () => [
       {
         icon: <Workflow size={18} />,
-        text: t(
-          '查看整个代码库，而不仅仅是孤立的代码片段。',
-        ),
+        text: t('查看整个代码库，而不仅仅是孤立的代码片段。'),
       },
       {
         icon: <TerminalSquare size={18} />,
-        text: t(
-          '理解项目结构和现有模式，提出真正适合的建议。',
-        ),
+        text: t('理解项目结构和现有模式，提出真正适合的建议。'),
       },
       {
         icon: <BadgeCheck size={18} />,
-        text: t(
-          '无需复制粘贴，建议可以直接落到代码文件和工作流里。',
-        ),
+        text: t('无需复制粘贴，建议可以直接落到代码文件和工作流里。'),
       },
     ],
     [t],
   );
 
   const trustItems = useMemo(
-    () => [
-      { name: t('阿里巴巴') },
-      { name: t('支付宝') },
-      { name: t('安利') },
-    ],
+    () => [{ name: t('阿里巴巴') }, { name: t('支付宝') }, { name: t('安利') }],
     [t],
   );
 
@@ -255,76 +274,52 @@ const MarketingHome = () => {
     [t],
   );
 
-  const pricingPlans = useMemo(
-    () => {
-      const paygoPlan = {
-        name: 'PAYGO',
-        price: t('按量付费'),
-        subtitle: t('永不过期'),
-        buttonLabel: t('立即充值'),
-        toneClassName: 'marketing-pricing-card--default',
-        buttonClassName: 'marketing-pricing-card__button--default',
-        features: [
-          {
-            prefix: t('充值金额，获得'),
-            accent: t('等价人民币'),
-            suffix: t('额度'),
-          },
-          { prefix: t('按实际使用付费') },
-          { prefix: t('标准价格') },
-          { prefix: t('永不过期'), accentOnly: true },
-        ],
-      };
+  const pricingPlans = useMemo(() => {
+    const paygoPlan = {
+      name: 'PAYGO',
+      price: t('按量付费'),
+      subtitle: t('永不过期'),
+      buttonLabel: t('立即充值'),
+      toneClassName: 'marketing-pricing-card--default',
+      buttonClassName: 'marketing-pricing-card__button--default',
+      features: [
+        {
+          prefix: t('充值金额，获得'),
+          accent: t('等价人民币'),
+          suffix: t('额度'),
+        },
+        { prefix: t('按实际使用付费') },
+        { prefix: t('标准价格') },
+        { prefix: t('永不过期'), accentOnly: true },
+      ],
+    };
 
-      /*
-      const subscriptionPlans = SUBSCRIPTION_PLAN_DEFINITIONS.map((plan) => {
-        const quota = getSubscriptionPlanQuota(plan.price, plan.discount);
-        return {
-          name: plan.key,
-          price: formatPricingAmount(plan.price),
-          badge: plan.badgeKey ? t(plan.badgeKey) : null,
-          buttonLabel: t(`选择 ${plan.key}`),
-          toneClassName: plan.homeToneClassName,
-          buttonClassName: plan.homeButtonClassName,
-          features: [
-            {
-              prefix: t('立即获得'),
-              accent: formatPricingAmount(quota, {
-                symbol: '￥',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }),
-              suffix: t('额度'),
-            },
-            {
-              prefix: t('折合'),
-              accent: t(getSubscriptionPlanDiscountLabel(plan.discount)),
-              suffix: t('优惠'),
-            },
-            { prefix: t('额度有效期30天') },
-            { prefix: t(plan.supportTextKey) },
-          ],
-        };
-      });
-      */
+    return [paygoPlan];
+  }, [t]);
 
-      return [paygoPlan];
-    },
-    [t],
+  // 真实订阅套餐：包装成 {plan} 结构并按折扣降序排序，复用钱包管理的卡片组件
+  const homeSubscriptionPlans = useMemo(
+    () =>
+      sortSubscriptionPlansByDiscount(
+        (subscriptionPlans || []).map((plan) => ({ plan })),
+        getQuotaPerUnit(),
+      ),
+    [subscriptionPlans],
   );
+
+  const handleHomePlanBuy = () => {
+    navigate(plansActionTo);
+  };
 
   return (
     <div className='marketing-home'>
       <section id='hero' className='marketing-section-shell marketing-hero'>
         <div className='marketing-hero__grid'>
           <div className='marketing-hero__copy'>
-
             <h1 className='marketing-hero__title'>
               <span className='marketing-hero__headline'>
                 {t('企业级')}
-                <span className='marketing-hero__ticket'>
-                  Claude Opus-4.6
-                </span>
+                <span className='marketing-hero__ticket'>Claude Opus-4.6</span>
               </span>
               <br />
               <span className='marketing-hero__accent'>
@@ -392,7 +387,10 @@ const MarketingHome = () => {
               <div className='marketing-hero-preview__body'>
                 <div className='marketing-hero-preview__pills'>
                   {providerItems.slice(0, 3).map((provider) => (
-                    <span key={provider.name} className='marketing-hero-preview__pill'>
+                    <span
+                      key={provider.name}
+                      className='marketing-hero-preview__pill'
+                    >
                       {provider.name}
                     </span>
                   ))}
@@ -409,7 +407,9 @@ const MarketingHome = () => {
                 <div className='marketing-hero-preview__code'>
                   {heroPreviewLines.map((line) => (
                     <div key={line} className='marketing-hero-preview__line'>
-                      <span className='marketing-hero-preview__line-mark'>&gt;</span>
+                      <span className='marketing-hero-preview__line-mark'>
+                        &gt;
+                      </span>
                       <span>{line}</span>
                     </div>
                   ))}
@@ -445,7 +445,9 @@ const MarketingHome = () => {
           </div>
 
           <div className='marketing-platform-row'>
-            <span className='marketing-platform-row__label'>{t('同时支持')}</span>
+            <span className='marketing-platform-row__label'>
+              {t('同时支持')}
+            </span>
             <div className='marketing-platform-providers'>
               {providerItems.map((provider) => (
                 <div key={provider.name} className='marketing-provider-inline'>
@@ -508,9 +510,7 @@ const MarketingHome = () => {
         <div className='marketing-section-heading marketing-section-heading--centered'>
           <h2>{t('Claude 模型系列')}</h2>
           <p>
-            {t(
-              'Claude 系列型号的尺寸适合任何任务，提供速度和性能的最佳组合。',
-            )}
+            {t('Claude 系列型号的尺寸适合任何任务，提供速度和性能的最佳组合。')}
           </p>
         </div>
 
@@ -582,35 +582,66 @@ const MarketingHome = () => {
 
       <div className='marketing-divider' />
 
-      <section id='plans' className='marketing-section-shell marketing-pricing-section'>
+      <section
+        id='plans'
+        className='marketing-section-shell marketing-pricing-section'
+      >
         <div className='marketing-section-heading marketing-section-heading--centered'>
           <h2>{t('选择您的订阅计划')}</h2>
         </div>
 
         <div className='marketing-pricing-grid'>
-          {pricingPlans.map((plan, index) => (
+          {/* 真实订阅套餐：复用钱包管理的卡片样式，按折扣降序 */}
+          {homeSubscriptionPlans.map((p, index) => (
             <ScrollReveal
-              key={plan.name}
-              as='article'
-              className={`marketing-pricing-card ${plan.toneClassName}`}
+              key={p?.plan?.id ?? `sub-${index}`}
+              as='div'
               delay={index * 90}
             >
+              <SubscriptionPlanTile
+                planWrapper={p}
+                index={index}
+                onBuy={handleHomePlanBuy}
+                t={t}
+              />
+            </ScrollReveal>
+          ))}
+
+          {/* 按量付费（保留原营销卡片样式） */}
+          {pricingPlans.map((plan, index) => (
+            <ScrollReveal
+              key={`${plan.name}-${index}`}
+              as='article'
+              className={`marketing-pricing-card ${plan.toneClassName}`}
+              delay={(homeSubscriptionPlans.length + index) * 90}
+            >
               {plan.badge ? (
-                <div className='marketing-pricing-card__badge'>{plan.badge}</div>
+                <div className='marketing-pricing-card__badge'>
+                  {plan.badge}
+                </div>
               ) : null}
 
               <div className='marketing-pricing-card__head'>
                 <h3>{plan.name}</h3>
-                <div className='marketing-pricing-card__price'>{plan.price}</div>
+                <div className='marketing-pricing-card__price'>
+                  {plan.price}
+                </div>
                 {plan.subtitle ? (
-                  <p className='marketing-pricing-card__subtitle'>{plan.subtitle}</p>
+                  <p className='marketing-pricing-card__subtitle'>
+                    {plan.subtitle}
+                  </p>
                 ) : null}
               </div>
 
               <div className='marketing-pricing-card__features'>
                 {plan.features.map((feature) => (
-                  <div key={`${plan.name}-${feature.prefix}`} className='marketing-pricing-card__feature'>
-                    <span className='marketing-pricing-card__feature-mark'>✓</span>
+                  <div
+                    key={`${plan.name}-${feature.prefix}`}
+                    className='marketing-pricing-card__feature'
+                  >
+                    <span className='marketing-pricing-card__feature-mark'>
+                      ✓
+                    </span>
                     <span>
                       {feature.accentOnly ? (
                         <span className='marketing-pricing-card__feature-accent'>
@@ -668,11 +699,7 @@ const MarketingHome = () => {
           </div>
           <div className='marketing-story-callout__content'>
             <h3 style={{ fontWeight: 'bold' }}>{t('为什么选用AI Force？')}</h3>
-            <p>
-              {t(
-                '不仅仅是聚合，更是加速。选择我们，告别API焦虑。',
-              )}
-            </p>
+            <p>{t('不仅仅是聚合，更是加速。选择我们，告别API焦虑。')}</p>
             {/* <div className='marketing-story-callout__actions'>
               <Link to='/about' className='marketing-inline-link'>
                 <span>{t('查看部署文档')}</span>

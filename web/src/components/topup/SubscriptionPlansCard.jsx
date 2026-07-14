@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useMemo, useState } from 'react';
 import {
   Badge,
@@ -12,13 +30,11 @@ import {
   Typography,
 } from '@douyinfe/semi-ui';
 import { API, showError, showSuccess, renderQuota } from '../../helpers';
-import { getCurrencyConfig } from '../../helpers/render';
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { getQuotaPerUnit } from '../../helpers/quota';
+import { sortSubscriptionPlansByDiscount } from '../../helpers/subscriptionFormat';
+import { RefreshCw } from 'lucide-react';
 import SubscriptionPurchaseModal from './modals/SubscriptionPurchaseModal';
-import {
-  formatSubscriptionDuration,
-  formatSubscriptionResetPeriod,
-} from '../../helpers/subscriptionFormat';
+import SubscriptionPlanTile from './SubscriptionPlanTile';
 
 const { Text } = Typography;
 
@@ -212,6 +228,12 @@ const SubscriptionPlansCard = ({
     });
     return map;
   }, [plans]);
+
+  // 按折扣降序排序（9.5折 -> 9折 -> 8.5折），无优惠套餐排末尾
+  const sortedPlans = useMemo(
+    () => sortSubscriptionPlansByDiscount(plans, getQuotaPerUnit()),
+    [plans],
+  );
 
   const getPlanPurchaseCount = (planId) =>
     planPurchaseCountMap.get(planId) || 0;
@@ -457,163 +479,19 @@ const SubscriptionPlansCard = ({
             )}
           </Card>
 
-          {/* 可购买套餐 - 标准定价卡片 */}
-          {plans.length > 0 ? (
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5 w-full px-1'>
-              {plans.map((p, index) => {
-                const plan = p?.plan;
-                const totalAmount = Number(plan?.total_amount || 0);
-                const { symbol, rate } = getCurrencyConfig();
-                const price = Number(plan?.price_amount || 0);
-                const convertedPrice = price * rate;
-                const displayPrice = convertedPrice.toFixed(
-                  Number.isInteger(convertedPrice) ? 0 : 2,
-                );
-                const isPopular = index === 0 && plans.length > 1;
-                const limit = Number(plan?.max_purchase_per_user || 0);
-                const limitLabel = limit > 0 ? `${t('限购')} ${limit}` : null;
-                const totalLabel =
-                  totalAmount > 0
-                    ? `${t('总额度')}: ${renderQuota(totalAmount)}`
-                    : `${t('总额度')}: ${t('不限')}`;
-                const upgradeLabel = plan?.upgrade_group
-                  ? `${t('升级分组')}: ${plan.upgrade_group}`
-                  : null;
-                const resetLabel =
-                  formatSubscriptionResetPeriod(plan, t) === t('不重置')
-                    ? null
-                    : `${t('额度重置')}: ${formatSubscriptionResetPeriod(plan, t)}`;
-                const planBenefits = [
-                  {
-                    label: `${t('有效期')}: ${formatSubscriptionDuration(plan, t)}`,
-                  },
-                  resetLabel ? { label: resetLabel } : null,
-                  totalAmount > 0
-                    ? {
-                        label: totalLabel,
-                        tooltip: `${t('原生额度')}：${totalAmount}`,
-                      }
-                    : { label: totalLabel },
-                  limitLabel ? { label: limitLabel } : null,
-                  upgradeLabel ? { label: upgradeLabel } : null,
-                ].filter(Boolean);
-
-                return (
-                  <Card
-                    key={plan?.id}
-                    className={`!rounded-xl transition-all hover:shadow-lg w-full h-full ${
-                      isPopular ? 'ring-2 ring-purple-500' : ''
-                    }`}
-                    bodyStyle={{ padding: 0 }}
-                  >
-                    <div className='p-4 h-full flex flex-col'>
-                      {/* 推荐标签 */}
-                      {isPopular && (
-                        <div className='mb-2'>
-                          <Tag color='purple' shape='circle' size='small'>
-                            <Sparkles size={10} className='mr-1' />
-                            {t('推荐')}
-                          </Tag>
-                        </div>
-                      )}
-                      {/* 套餐名称 */}
-                      <div className='mb-3'>
-                        <Typography.Title
-                          heading={5}
-                          ellipsis={{ rows: 1, showTooltip: true }}
-                          style={{ margin: 0 }}
-                        >
-                          {plan?.title || t('订阅套餐')}
-                        </Typography.Title>
-                        {plan?.subtitle && (
-                          <Text
-                            type='tertiary'
-                            size='small'
-                            ellipsis={{ rows: 1, showTooltip: true }}
-                            style={{ display: 'block' }}
-                          >
-                            {plan.subtitle}
-                          </Text>
-                        )}
-                      </div>
-
-                      {/* 价格区域 */}
-                      <div className='py-2'>
-                        <div className='flex items-baseline justify-start'>
-                          <span className='text-xl font-bold text-purple-600'>
-                            {symbol}
-                          </span>
-                          <span className='text-3xl font-bold text-purple-600'>
-                            {displayPrice}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* 套餐权益描述 */}
-                      <div className='flex flex-col items-start gap-1 pb-2'>
-                        {planBenefits.map((item) => {
-                          const content = (
-                            <div className='flex items-center gap-2 text-xs text-gray-500'>
-                              <Badge dot type='tertiary' />
-                              <span>{item.label}</span>
-                            </div>
-                          );
-                          if (!item.tooltip) {
-                            return (
-                              <div
-                                key={item.label}
-                                className='w-full flex justify-start'
-                              >
-                                {content}
-                              </div>
-                            );
-                          }
-                          return (
-                            <Tooltip key={item.label} content={item.tooltip}>
-                              <div className='w-full flex justify-start'>
-                                {content}
-                              </div>
-                            </Tooltip>
-                          );
-                        })}
-                      </div>
-
-                      <div className='mt-auto'>
-                        <Divider margin={12} />
-
-                        {/* 购买按钮 */}
-                        {(() => {
-                          const count = getPlanPurchaseCount(p?.plan?.id);
-                          const reached = limit > 0 && count >= limit;
-                          const tip = reached
-                            ? t('已达到购买上限') + ` (${count}/${limit})`
-                            : '';
-                          const buttonEl = (
-                            <Button
-                              theme='outline'
-                              type='primary'
-                              block
-                              disabled={reached}
-                              onClick={() => {
-                                if (!reached) openBuy(p);
-                              }}
-                            >
-                              {reached ? t('已达上限') : t('立即订阅')}
-                            </Button>
-                          );
-                          return reached ? (
-                            <Tooltip content={tip} position='top'>
-                              {buttonEl}
-                            </Tooltip>
-                          ) : (
-                            buttonEl
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
+          {/* 可购买套餐 - 定价卡片 */}
+          {sortedPlans.length > 0 ? (
+            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 w-full px-1 py-2'>
+              {sortedPlans.map((p, index) => (
+                <SubscriptionPlanTile
+                  key={p?.plan?.id ?? index}
+                  planWrapper={p}
+                  index={index}
+                  onBuy={openBuy}
+                  purchaseCount={getPlanPurchaseCount(p?.plan?.id)}
+                  t={t}
+                />
+              ))}
             </div>
           ) : (
             <div className='text-center text-gray-400 text-sm py-4'>

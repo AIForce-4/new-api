@@ -38,6 +38,57 @@ func GetSubscriptionPlans(c *gin.Context) {
 	common.ApiSuccess(c, result)
 }
 
+// PublicSubscriptionPlanDTO exposes only display-safe fields for the public
+// marketing pages (no auth). It deliberately omits payment provider IDs and
+// other internal configuration.
+type PublicSubscriptionPlanDTO struct {
+	Id       int    `json:"id"`
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+
+	PriceAmount float64 `json:"price_amount"`
+	Currency    string  `json:"currency"`
+
+	DurationUnit  string `json:"duration_unit"`
+	DurationValue int    `json:"duration_value"`
+	CustomSeconds int64  `json:"custom_seconds"`
+
+	TotalAmount int64 `json:"total_amount"`
+
+	QuotaResetPeriod        string `json:"quota_reset_period"`
+	QuotaResetCustomSeconds int64  `json:"quota_reset_custom_seconds"`
+
+	SortOrder int `json:"sort_order"`
+}
+
+// GetPublicSubscriptionPlans returns enabled plans for unauthenticated
+// marketing pages (home page pricing section).
+func GetPublicSubscriptionPlans(c *gin.Context) {
+	var plans []model.SubscriptionPlan
+	if err := model.DB.Where("enabled = ?", true).Order("sort_order desc, id desc").Find(&plans).Error; err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	result := make([]PublicSubscriptionPlanDTO, 0, len(plans))
+	for _, p := range plans {
+		result = append(result, PublicSubscriptionPlanDTO{
+			Id:                      p.Id,
+			Title:                   p.Title,
+			Subtitle:                p.Subtitle,
+			PriceAmount:             p.PriceAmount,
+			Currency:                p.Currency,
+			DurationUnit:            p.DurationUnit,
+			DurationValue:           p.DurationValue,
+			CustomSeconds:           p.CustomSeconds,
+			TotalAmount:             p.TotalAmount,
+			QuotaResetPeriod:        p.QuotaResetPeriod,
+			QuotaResetCustomSeconds: p.QuotaResetCustomSeconds,
+			SortOrder:               p.SortOrder,
+		})
+	}
+	common.ApiSuccess(c, result)
+}
+
 func GetSubscriptionSelf(c *gin.Context) {
 	userId := c.GetInt("id")
 	settingMap, _ := model.GetUserSetting(userId, false)
