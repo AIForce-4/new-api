@@ -359,7 +359,7 @@ func WithdrawInviteRebate(username string, quota int, operatorId int) error {
 
 	var target User
 	err := DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("username = ?", username).First(&target).Error; err != nil {
+		if err := lockForUpdate(tx).Where("username = ?", username).First(&target).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return errors.New("用户不存在")
 			}
