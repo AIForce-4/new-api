@@ -214,6 +214,7 @@ func HandleFinalResponse(c *gin.Context, info *relaycommon.RelayInfo, lastStream
 			return
 		}
 
+		info.SendResponseCount++
 		info.ClaudeConvertInfo.Usage = usage
 
 		claudeResponses := service.StreamResponseOpenAI2Claude(&streamResponse, info)

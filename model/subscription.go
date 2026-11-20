@@ -1061,7 +1061,22 @@ func RefundSubscriptionPreConsume(requestId string) error {
 	if strings.TrimSpace(requestId) == "" {
 		return errors.New("requestId is empty")
 	}
+	// Non-locking pre-read to get UserSubscriptionId before entering the
+	// transaction. PreConsumeUserSubscription locks in the order
+	// UserSubscription → PreConsumeRecord; matching that order here prevents
+	// an AB/BA deadlock on MySQL InnoDB.
+	var preRead SubscriptionPreConsumeRecord
+	if err := DB.Where("request_id = ?", requestId).First(&preRead).Error; err != nil {
+		return err
+	}
 	return DB.Transaction(func(tx *gorm.DB) error {
+		// Lock UserSubscription first to match PreConsume's lock order.
+		if preRead.PreConsumed > 0 && preRead.Status != "refunded" {
+			var sub UserSubscription
+			if err := lockForUpdate(tx).Where("id = ?", preRead.UserSubscriptionId).First(&sub).Error; err != nil {
+				return err
+			}
+		}
 		var record SubscriptionPreConsumeRecord
 		if err := lockForUpdate(tx).
 			Where("request_id = ?", requestId).First(&record).Error; err != nil {
