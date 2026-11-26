@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import i18next from 'i18next';
 import { Modal, Tag, Typography, Avatar } from '@douyinfe/semi-ui';
 import { copy, showSuccess } from './utils';
@@ -122,6 +140,8 @@ export function getLucideIcon(key, selected = false) {
       return <TerminalSquare {...commonProps} color={iconColor} />;
     case 'codex':
       return <Code2 {...commonProps} color={iconColor} />;
+    case 'gemini':
+      return <Gemini {...commonProps} color={iconColor} />;
     case 'tutorial':
       return <BookOpen {...commonProps} color={iconColor} />;
     case 'topup':
@@ -2206,14 +2226,22 @@ export function renderLogContent(opts) {
 
 const TIER_VAR_KEYS = ['p', 'c', 'cr', 'cc', 'cc1h', 'img', 'ai', 'ao'];
 const TIER_VAR_TO_FIELD = {
-  p: 'inputPrice', c: 'outputPrice',
-  cr: 'cacheReadPrice', cc: 'cacheCreatePrice', cc1h: 'cacheCreate1hPrice',
-  img: 'imagePrice', ai: 'audioInputPrice', ao: 'audioOutputPrice',
+  p: 'inputPrice',
+  c: 'outputPrice',
+  cr: 'cacheReadPrice',
+  cc: 'cacheCreatePrice',
+  cc1h: 'cacheCreate1hPrice',
+  img: 'imagePrice',
+  ai: 'audioInputPrice',
+  ao: 'audioOutputPrice',
 };
 
 function parseTierBody(bodyStr) {
   const coeffs = {};
-  const re = new RegExp(`\\b(${TIER_VAR_KEYS.join('|')})\\s*\\*\\s*([\\d.eE+-]+)`, 'g');
+  const re = new RegExp(
+    `\\b(${TIER_VAR_KEYS.join('|')})\\s*\\*\\s*([\\d.eE+-]+)`,
+    'g',
+  );
   let m;
   while ((m = re.exec(bodyStr)) !== null) {
     if (!(m[1] in coeffs)) coeffs[m[1]] = Number(m[2]);
@@ -2231,7 +2259,10 @@ export function parseTiersFromExpr(exprStr) {
     const versionMatch = exprStr.match(/^v\d+:([\s\S]*)$/);
     if (versionMatch) exprStr = versionMatch[1];
     const condGroup = `((?:(?:p|c|len)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)(?:\\s*&&\\s*(?:p|c|len)\\s*(?:<|<=|>|>=)\\s*[\\d.eE+]+)*)`;
-    const tierRe = new RegExp(`(?:${condGroup}\\s*\\?\\s*)?tier\\("([^"]*)",\\s*([^)]+)\\)`, 'g');
+    const tierRe = new RegExp(
+      `(?:${condGroup}\\s*\\?\\s*)?tier\\("([^"]*)",\\s*([^)]+)\\)`,
+      'g',
+    );
     const tiers = [];
     let m;
     while ((m = tierRe.exec(exprStr)) !== null) {
@@ -2240,7 +2271,8 @@ export function parseTiersFromExpr(exprStr) {
       if (condStr) {
         for (const cp of condStr.split(/\s*&&\s*/)) {
           const cm = cp.trim().match(/^(p|c|len)\s*(<|<=|>|>=)\s*([\d.eE+]+)$/);
-          if (cm) conditions.push({ var: cm[1], op: cm[2], value: Number(cm[3]) });
+          if (cm)
+            conditions.push({ var: cm[1], op: cm[2], value: Number(cm[3]) });
         }
       }
       const tier = parseTierBody(m[3]);
@@ -2267,7 +2299,11 @@ export function renderTieredModelPrice(opts) {
     cache_creation_tokens_1h: cacheCreationTokens1h = 0,
   } = opts;
   let exprStr = '';
-  try { exprStr = atob(exprB64); } catch { /* ignore */ }
+  try {
+    exprStr = atob(exprB64);
+  } catch {
+    /* ignore */
+  }
   const tiers = parseTiersFromExpr(exprStr);
   if (tiers.length === 0) {
     return i18next.t('阶梯计费（表达式解析失败）');
@@ -2293,7 +2329,11 @@ export function renderTieredModelPrice(opts) {
     ...priceLines
       .filter(([field]) => tier[field] > 0)
       .map(([field, label]) =>
-        buildBillingPriceText(`${label}：{{symbol}}{{price}} / 1M tokens`, { symbol, usdAmount: tier[field], rate }),
+        buildBillingPriceText(`${label}：{{symbol}}{{price}} / 1M tokens`, {
+          symbol,
+          usdAmount: tier[field],
+          rate,
+        }),
       ),
   ];
 
@@ -2314,7 +2354,11 @@ export function renderTieredModelPriceSimple(opts) {
     outputMode = 'segments',
   } = opts;
   let exprStr = '';
-  try { exprStr = atob(exprB64); } catch { /* ignore */ }
+  try {
+    exprStr = atob(exprB64);
+  } catch {
+    /* ignore */
+  }
   const tiers = parseTiersFromExpr(exprStr);
   const tier = tiers.find((t) => t.label === matchedTier) || tiers[0];
 

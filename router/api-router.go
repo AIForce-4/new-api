@@ -30,6 +30,12 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/about", controller.GetAbout)
 		//apiRouter.GET("/midjourney", controller.GetMidjourney)
 		apiRouter.GET("/home_page_content", controller.GetHomePageContent)
+		apiRouter.GET("/site_asset/:filename", controller.GetHomeNoticeImage)
+		apiRouter.GET(
+			"/inspiration_workshop/config",
+			middleware.UserAuth(),
+			controller.GetInspirationWorkshopSettings,
+		)
 		apiRouter.GET("/pricing", middleware.TryUserAuth(), controller.GetPricing)
 		apiRouter.GET("/verification", middleware.EmailVerificationRateLimit(), middleware.TurnstileCheck(), controller.SendEmailVerification)
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)
@@ -188,6 +194,32 @@ func SetApiRouter(router *gin.Engine) {
 			optionRoute.DELETE("/channel_affinity_cache", controller.ClearChannelAffinityCache)
 			optionRoute.POST("/rest_model_ratio", controller.ResetModelRatio)
 			optionRoute.POST("/migrate_console_setting", controller.MigrateConsoleSetting) // 用于迁移检测的旧键，下个版本会删除
+		}
+		adminOptionRoute := apiRouter.Group("/option")
+		adminOptionRoute.Use(middleware.AdminAuth())
+		{
+			adminOptionRoute.GET("/home_notice", controller.GetHomeNoticeSettings)
+			adminOptionRoute.PUT("/home_notice", controller.UpdateHomeNoticeSettings)
+			adminOptionRoute.POST(
+				"/home_notice/image",
+				middleware.UploadRateLimit(),
+				controller.UploadHomeNoticeImage,
+			)
+			adminOptionRoute.GET("/group_promo", controller.GetGroupPromoSettings)
+			adminOptionRoute.PUT("/group_promo", controller.UpdateGroupPromoSettings)
+			adminOptionRoute.POST(
+				"/group_promo/image",
+				middleware.UploadRateLimit(),
+				controller.UploadGroupPromoImage,
+			)
+			adminOptionRoute.GET(
+				"/inspiration_workshop",
+				controller.GetInspirationWorkshopSettings,
+			)
+			adminOptionRoute.PUT(
+				"/inspiration_workshop",
+				controller.UpdateInspirationWorkshopSettings,
+			)
 		}
 
 		// Custom OAuth provider management (root only)

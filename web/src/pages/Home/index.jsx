@@ -1,4 +1,22 @@
-import React, { useEffect, useState } from 'react';
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
+import React, { useContext, useEffect, useState } from 'react';
 import { API, showError } from '../../helpers';
 import { useActualTheme } from '../../context/Theme';
 import { marked } from 'marked';
@@ -6,14 +24,17 @@ import { useTranslation } from 'react-i18next';
 import NoticeModal from '../../components/layout/NoticeModal';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import MarketingHome from '../../components/home/MarketingHome';
+import { StatusContext } from '../../context/Status';
 
 const Home = () => {
   const { i18n, t } = useTranslation();
   const actualTheme = useActualTheme();
+  const [statusState] = useContext(StatusContext);
   const [homePageContentLoaded, setHomePageContentLoaded] = useState(false);
   const [homePageContent, setHomePageContent] = useState('');
   const [noticeVisible, setNoticeVisible] = useState(false);
   const isMobile = useIsMobile();
+  const homeNotice = statusState?.status?.home_notice;
 
   const displayHomePageContent = async () => {
     setHomePageContent(localStorage.getItem('home_page_content') || '');
@@ -46,23 +67,22 @@ const Home = () => {
 
   useEffect(() => {
     const checkNoticeAndShow = async () => {
+      if (
+        !homeNotice?.enabled ||
+        (!homeNotice?.content?.trim() && !homeNotice?.qr_code_image_url?.trim())
+      ) {
+        return;
+      }
+
       const lastCloseDate = localStorage.getItem('notice_close_date');
       const today = new Date().toDateString();
       if (lastCloseDate !== today) {
-        try {
-          const res = await API.get('/api/notice');
-          const { success, data } = res.data;
-          if (success && data && data.trim() !== '') {
-            setNoticeVisible(true);
-          }
-        } catch (error) {
-          console.error('获取公告失败:', error);
-        }
+        setNoticeVisible(true);
       }
     };
 
     checkNoticeAndShow();
-  }, []);
+  }, [homeNotice]);
 
   useEffect(() => {
     displayHomePageContent().then();
@@ -80,10 +100,7 @@ const Home = () => {
       ) : (
         <div className='home-page home-page--custom overflow-x-hidden w-full'>
           {homePageContent.startsWith('https://') ? (
-            <iframe
-              src={homePageContent}
-              className='public-content-frame'
-            />
+            <iframe src={homePageContent} className='public-content-frame' />
           ) : (
             <div
               className='public-document-card home-custom-content'

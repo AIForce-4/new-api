@@ -1,11 +1,30 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useMemo, useState } from 'react';
 import { Info, Percent } from 'lucide-react';
-import { Claude, OpenAI } from '../../helpers/lobeIcons';
+import { Claude, Gemini, OpenAI } from '../../helpers/lobeIcons';
 import { CONSOLE_PRICING_PRODUCTS } from './consolePricingData';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 
 const PRODUCT_ICONS = {
   claude: Claude.Color,
+  gemini: Gemini.Color,
   openai: OpenAI,
 };
 
@@ -41,7 +60,9 @@ const renderFullFormulaContent = (content) => {
       {prefix}
       <span className='console-model-pricing__formula-detail'>{detail}</span>
       {beforeAccent}
-      <span className='console-model-pricing__formula-accent'>{accentText}</span>
+      <span className='console-model-pricing__formula-accent'>
+        {accentText}
+      </span>
       {afterAccent}
     </>
   );
@@ -64,7 +85,9 @@ const renderTieredContent = (tiers) => (
         >
           {tier.label}
         </span>
-        <span className='console-model-pricing__tier-value'>{tier.content}</span>
+        <span className='console-model-pricing__tier-value'>
+          {tier.content}
+        </span>
       </div>
     ))}
   </div>
@@ -77,7 +100,9 @@ const renderCellContent = (cell) => {
 
   if (cell.accent) {
     return (
-      <span className='console-model-pricing__accent-value'>{cell.content}</span>
+      <span className='console-model-pricing__accent-value'>
+        {cell.content}
+      </span>
     );
   }
 
@@ -107,7 +132,9 @@ const SectionCard = ({ title, badge, children }) => (
       <div className='console-model-pricing__section-title-wrap'>
         <h2 className='console-model-pricing__section-title'>{title}</h2>
       </div>
-      {badge ? <div className='console-model-pricing__section-badge'>{badge}</div> : null}
+      {badge ? (
+        <div className='console-model-pricing__section-badge'>{badge}</div>
+      ) : null}
     </div>
     <div className='console-model-pricing__section-body'>{children}</div>
   </section>
@@ -209,21 +236,30 @@ const ChannelCards = ({ channels }) => (
   <div
     className={[
       'console-model-pricing__channel-grid',
-      channels.length === 1 ? 'console-model-pricing__channel-grid--single' : '',
+      channels.length === 1
+        ? 'console-model-pricing__channel-grid--single'
+        : '',
     ]
       .filter(Boolean)
       .join(' ')}
   >
     {channels.map((channel) => (
-      <article key={channel.key} className='console-model-pricing__channel-card'>
+      <article
+        key={channel.key}
+        className='console-model-pricing__channel-card'
+      >
         <div className='console-model-pricing__channel-icon'>
           <Percent size={16} />
         </div>
-        <div className='console-model-pricing__channel-title'>{channel.title}</div>
+        <div className='console-model-pricing__channel-title'>
+          {channel.title}
+        </div>
         <div className='console-model-pricing__channel-discount'>
           {channel.discount}
         </div>
-        <div className='console-model-pricing__channel-rate'>{channel.rate}</div>
+        <div className='console-model-pricing__channel-rate'>
+          {channel.rate}
+        </div>
       </article>
     ))}
   </div>
@@ -235,8 +271,9 @@ const ConsolePricingPage = () => {
 
   const activeProduct = useMemo(
     () =>
-      CONSOLE_PRICING_PRODUCTS.find((product) => product.id === activeProductId) ||
-      CONSOLE_PRICING_PRODUCTS[0],
+      CONSOLE_PRICING_PRODUCTS.find(
+        (product) => product.id === activeProductId,
+      ) || CONSOLE_PRICING_PRODUCTS[0],
     [activeProductId],
   );
 

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   Banner,
@@ -21,7 +39,6 @@ const LEGAL_PRIVACY_POLICY_KEY = 'legal.privacy_policy';
 const OtherSetting = () => {
   const { t } = useTranslation();
   let [inputs, setInputs] = useState({
-    Notice: '',
     [LEGAL_USER_AGREEMENT_KEY]: '',
     [LEGAL_PRIVACY_POLICY_KEY]: '',
     SystemName: '',
@@ -54,7 +71,6 @@ const OtherSetting = () => {
   };
 
   const [loadingInput, setLoadingInput] = useState({
-    Notice: false,
     [LEGAL_USER_AGREEMENT_KEY]: false,
     [LEGAL_PRIVACY_POLICY_KEY]: false,
     SystemName: false,
@@ -71,19 +87,6 @@ const OtherSetting = () => {
 
   // 通用设置
   const formAPISettingGeneral = useRef();
-  // 通用设置 - Notice
-  const submitNotice = async () => {
-    try {
-      setLoadingInput((loadingInput) => ({ ...loadingInput, Notice: true }));
-      await updateOption('Notice', inputs.Notice);
-      showSuccess(t('公告已更新'));
-    } catch (error) {
-      console.error(t('公告更新失败'), error);
-      showError(t('公告更新失败'));
-    } finally {
-      setLoadingInput((loadingInput) => ({ ...loadingInput, Notice: false }));
-    }
-  };
   // 通用设置 - UserAgreement
   const submitUserAgreement = async () => {
     try {
@@ -343,19 +346,6 @@ const OtherSetting = () => {
         >
           <Card>
             <Form.Section text={t('通用设置')}>
-              <Form.TextArea
-                label={t('公告')}
-                placeholder={t(
-                  '在此输入新的公告内容，支持 Markdown & HTML 代码',
-                )}
-                field={'Notice'}
-                onChange={handleInputChange}
-                style={{ fontFamily: 'JetBrains Mono, Consolas' }}
-                autosize={{ minRows: 6, maxRows: 12 }}
-              />
-              <Button onClick={submitNotice} loading={loadingInput['Notice']}>
-                {t('设置公告')}
-              </Button>
               <Form.TextArea
                 label={t('用户协议')}
                 placeholder={t(

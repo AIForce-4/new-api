@@ -1,5 +1,22 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useContext, useEffect, useState } from 'react';
-import { Modal } from '@douyinfe/semi-ui';
 import { getRelativeTime } from '../../helpers';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
@@ -12,6 +29,7 @@ import AnnouncementsPanel from './AnnouncementsPanel';
 import FaqPanel from './FaqPanel';
 import UptimePanel from './UptimePanel';
 import SearchModal from './modals/SearchModal';
+import GroupPromoModal from './GroupPromoModal';
 
 import { useDashboardData } from '../../hooks/dashboard/useDashboardData';
 import { useDashboardStats } from '../../hooks/dashboard/useDashboardStats';
@@ -108,6 +126,7 @@ const Dashboard = () => {
     },
   );
   const faqData = statusState?.status?.faq || [];
+  const groupPromoSettings = statusState?.status?.group_promo;
 
   const uptimeLegendData = Object.entries(UPTIME_STATUS_MAP).map(
     ([status, info]) => ({
@@ -139,42 +158,11 @@ const Dashboard = () => {
 
   return (
     <div className='console-dashboard h-full'>
-      <Modal
-        centered
-        className='group-promo-dialog'
-        footer={null}
-        onCancel={() => setGroupPromoVisible(false)}
+      <GroupPromoModal
         visible={groupPromoVisible}
-        width={920}
-        bodyStyle={{ overflowY: 'hidden' }}
-      >
-        <div className='group-promo-modal'>
-          <div className='group-promo-modal__header'>
-            <div className='group-promo-modal__badge'>系统公告</div>
-          </div>
-          <div className='group-promo-modal__warning'>
-            <div className='group-promo-modal__warning-title'>⚠️ 地区限制提示</div>
-            <div className='group-promo-modal__warning-text'>
-              依据相关法律法规，本平台拒绝向中国大陆地区用户提供服务。如您位于中国大陆，请立即停止使用。
-            </div>
-            <div className='group-promo-modal__warning-text'>
-              ※ 继续使用即表示您确认自身不位于受限地区，并自愿承担由此产生的一切法律后果。
-            </div>
-          </div>
-          <div className='group-promo-modal__cards'>
-            <div className='group-promo-modal__card'>
-              <div className='group-promo-modal__card-title'>平台客服</div>
-              <div className='group-promo-modal__card-desc'>扫码添加客服，获取提现协助与使用支持</div>
-              <img src='/pricing-contact-qr.jpg' alt='aif4 客服二维码' className='group-promo-modal__image' />
-            </div>
-            <div className='group-promo-modal__card'>
-              <div className='group-promo-modal__card-title'>用户群</div>
-              <div className='group-promo-modal__card-desc'>扫码加入用户群，接收交流答疑与活动通知</div>
-              <img src='/qunPic.jpg' alt='aif4 客户群二维码' className='group-promo-modal__image' />
-            </div>
-          </div>
-        </div>
-      </Modal>
+        onClose={() => setGroupPromoVisible(false)}
+        settings={groupPromoSettings}
+      />
 
       <DashboardHeader
         getGreeting={dashboardData.getGreeting}

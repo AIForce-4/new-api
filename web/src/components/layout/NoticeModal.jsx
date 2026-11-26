@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useEffect, useState, useContext, useMemo } from 'react';
 import {
   Button,
@@ -8,7 +26,7 @@ import {
   Timeline,
 } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
-import { API, showError, getRelativeTime } from '../../helpers';
+import { getRelativeTime } from '../../helpers';
 import { marked } from 'marked';
 import {
   IllustrationNoContent,
@@ -21,17 +39,25 @@ const NoticeModal = ({
   visible,
   onClose,
   isMobile,
+  homeNoticeOverride = null,
+  previewMode = false,
   defaultTab = 'inApp',
   unreadKeys = [],
 }) => {
   const { t } = useTranslation();
-  const [noticeContent, setNoticeContent] = useState('');
-  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const [statusState] = useContext(StatusContext);
 
   const announcements = statusState?.status?.announcements || [];
+  const homeNotice = homeNoticeOverride || statusState?.status?.home_notice;
+  const noticeContent = useMemo(
+    () => marked.parse(homeNotice?.content || ''),
+    [homeNotice?.content],
+  );
+  const qrCodeImageURL = homeNotice?.qr_code_image_url?.trim() || '';
+  const qrCodeCaption =
+    homeNotice?.qr_code_caption?.trim() || t('微信扫码添加客服');
 
   const unreadSet = useMemo(() => new Set(unreadKeys), [unreadKeys]);
 
@@ -58,38 +84,12 @@ const NoticeModal = ({
   }, [announcements, unreadSet]);
 
   const handleCloseTodayNotice = () => {
-    const today = new Date().toDateString();
-    localStorage.setItem('notice_close_date', today);
+    if (!previewMode) {
+      const today = new Date().toDateString();
+      localStorage.setItem('notice_close_date', today);
+    }
     onClose();
   };
-
-  const displayNotice = async () => {
-    setLoading(true);
-    try {
-      const res = await API.get('/api/notice');
-      const { success, message, data } = res.data;
-      if (success) {
-        if (data !== '') {
-          const htmlNotice = marked.parse(data);
-          setNoticeContent(htmlNotice);
-        } else {
-          setNoticeContent('');
-        }
-      } else {
-        showError(message);
-      }
-    } catch (error) {
-      showError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (visible) {
-      displayNotice();
-    }
-  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -98,15 +98,7 @@ const NoticeModal = ({
   }, [defaultTab, visible]);
 
   const renderMarkdownNotice = () => {
-    if (loading) {
-      return (
-        <div className='py-12'>
-          <Empty description={t('加载中...')} />
-        </div>
-      );
-    }
-
-    if (!noticeContent) {
+    if (!noticeContent && !qrCodeImageURL) {
       return (
         <div className='py-12'>
           <Empty
@@ -124,9 +116,30 @@ const NoticeModal = ({
 
     return (
       <div
-        dangerouslySetInnerHTML={{ __html: noticeContent }}
-        className='notice-content-scroll max-h-[55vh] overflow-y-auto pr-2'
-      />
+        className={[
+          'notice-modal__layout',
+          !noticeContent ? 'notice-modal__layout--qr-only' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {noticeContent ? (
+          <div
+            dangerouslySetInnerHTML={{ __html: noticeContent }}
+            className='notice-content-scroll notice-modal__content'
+          />
+        ) : null}
+        {qrCodeImageURL ? (
+          <aside className='notice-modal__qr-card'>
+            <img
+              src={qrCodeImageURL}
+              alt={qrCodeCaption}
+              className='notice-modal__qr-image'
+            />
+            <p>{qrCodeCaption}</p>
+          </aside>
+        ) : null}
+      </div>
     );
   };
 
@@ -191,6 +204,7 @@ const NoticeModal = ({
 
   return (
     <Modal
+      className='notice-modal'
       title={
         <div className='flex items-center justify-between w-full'>
           <span>{t('系统公告')}</span>
@@ -218,11 +232,13 @@ const NoticeModal = ({
       onCancel={onClose}
       footer={
         <div className='flex justify-end'>
-          <Button type='secondary' onClick={handleCloseTodayNotice}>
-            {t('今日关闭')}
-          </Button>
+          {!previewMode ? (
+            <Button type='secondary' onClick={handleCloseTodayNotice}>
+              {t('今日关闭')}
+            </Button>
+          ) : null}
           <Button type='primary' onClick={onClose}>
-            {t('关闭公告')}
+            {previewMode ? t('关闭预览') : t('关闭公告')}
           </Button>
         </div>
       }

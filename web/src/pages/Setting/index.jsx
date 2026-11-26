@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useEffect, useState } from 'react';
 import { Layout, TabPane, Tabs } from '@douyinfe/semi-ui';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -15,11 +33,15 @@ import {
   CreditCard,
   Server,
   Activity,
+  Globe2,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 import SystemSetting from '../../components/settings/SystemSetting';
-import { isRoot } from '../../helpers';
+import { isAdmin, isRoot } from '../../helpers';
 import OtherSetting from '../../components/settings/OtherSetting';
+import SiteSetting from '../../components/settings/SiteSetting';
+import InspirationWorkshopSetting from '../../components/settings/InspirationWorkshopSetting';
 import OperationSetting from '../../components/settings/OperationSetting';
 import RateLimitSetting from '../../components/settings/RateLimitSetting';
 import ModelSetting from '../../components/settings/ModelSetting';
@@ -38,6 +60,29 @@ const Setting = () => {
   const location = useLocation();
   const [tabActiveKey, setTabActiveKey] = useState('1');
   let panes = [];
+
+  if (isAdmin()) {
+    panes.push({
+      tab: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Globe2 size={18} />
+          {t('官网设置')}
+        </span>
+      ),
+      content: <SiteSetting />,
+      itemKey: 'site',
+    });
+    panes.push({
+      tab: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <ImageIcon size={18} />
+          {t('灵感画坊')}
+        </span>
+      ),
+      content: <InspirationWorkshopSetting />,
+      itemKey: 'inspiration-workshop',
+    });
+  }
 
   if (isRoot()) {
     panes.push({
@@ -168,10 +213,10 @@ const Setting = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const tab = searchParams.get('tab');
-    if (tab) {
+    if (tab && panes.some((pane) => pane.itemKey === tab)) {
       setTabActiveKey(tab);
     } else {
-      onChangeTab('operation');
+      onChangeTab(panes[0]?.itemKey || 'site');
     }
   }, [location.search]);
   return (

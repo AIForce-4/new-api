@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -13,15 +31,19 @@ import {
   Toast,
   Typography,
 } from '@douyinfe/semi-ui';
-import { IconClose, IconDelete, IconDownload, IconImage } from '@douyinfe/semi-icons';
+import {
+  IconClose,
+  IconDelete,
+  IconDownload,
+  IconImage,
+} from '@douyinfe/semi-icons';
 import ConsolePageShell from '../layout/ConsolePageShell';
 import useInspirationTokens from '../../hooks/inspiration-workshop/useInspirationTokens';
 import useInspirationHistory from '../../hooks/inspiration-workshop/useInspirationHistory';
+import useInspirationWorkshopConfig from '../../hooks/inspiration-workshop/useInspirationWorkshopConfig';
 import {
   ASPECT_RATIO_OPTIONS,
-  DEFAULT_MODEL,
   FORMAT_OPTIONS,
-  MODEL_OPTIONS,
   QUALITY_OPTIONS,
   buildDownloadFilename,
   buildImageEditFormData,
@@ -34,7 +56,7 @@ import {
 
 const defaultGenerateForm = {
   tokenId: undefined,
-  model: DEFAULT_MODEL,
+  model: '',
   prompt: '',
   aspectRatio: 'auto',
   quality: 'medium',
@@ -44,7 +66,7 @@ const defaultGenerateForm = {
 
 const defaultEditForm = {
   tokenId: undefined,
-  model: DEFAULT_MODEL,
+  model: '',
   prompt: '',
   aspectRatio: 'auto',
   quality: 'medium',
@@ -54,7 +76,8 @@ const defaultEditForm = {
   maskImage: null,
 };
 
-const newHistoryId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const newHistoryId = () =>
+  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const FilePicker = ({ label, hint, accept, multiple, files, onChange }) => {
   const { t } = useTranslation();
@@ -78,7 +101,13 @@ const FilePicker = ({ label, hint, accept, multiple, files, onChange }) => {
       {files.length > 0 && (
         <div className='mt-3 flex flex-wrap gap-2'>
           {files.map((file, index) => (
-            <Tag key={`${file.name}-${index}`} closable onClose={() => onChange(files.filter((_, fileIndex) => fileIndex !== index))}>
+            <Tag
+              key={`${file.name}-${index}`}
+              closable
+              onClose={() =>
+                onChange(files.filter((_, fileIndex) => fileIndex !== index))
+              }
+            >
               {file.name}
             </Tag>
           ))}
@@ -191,17 +220,25 @@ const TokenStatus = ({ token }) => {
   const { t } = useTranslation();
 
   if (!token) {
-    return <div className='mt-3 text-sm text-[var(--semi-color-text-2)]'>• {t('请选择令牌')}</div>;
+    return (
+      <div className='mt-3 text-sm text-[var(--semi-color-text-2)]'>
+        • {t('请选择令牌')}
+      </div>
+    );
   }
 
   if (token.status !== 1) {
-    return <div className='mt-3 text-sm text-red-500'>• {t('当前令牌不可用')}</div>;
+    return (
+      <div className='mt-3 text-sm text-red-500'>• {t('当前令牌不可用')}</div>
+    );
   }
 
   return (
     <div className='mt-3 text-sm text-green-600'>
       • {t('令牌已就绪')}
-      {token.unlimited_quota ? '' : ` · ${t('剩余额度')} ${token.remain_quota ?? 0}`}
+      {token.unlimited_quota
+        ? ''
+        : ` · ${t('剩余额度')} ${token.remain_quota ?? 0}`}
     </div>
   );
 };
@@ -245,7 +282,13 @@ const OptionButtons = ({ options, value, onChange }) => (
   </div>
 );
 
-const CommonControls = ({ form, setForm, showQuantity = true }) => {
+const CommonControls = ({
+  form,
+  setForm,
+  modelOptions,
+  modelsLoading,
+  showQuantity = true,
+}) => {
   const { t } = useTranslation();
 
   return (
@@ -257,7 +300,9 @@ const CommonControls = ({ form, setForm, showQuantity = true }) => {
         <Select
           className='w-full'
           value={form.model}
-          optionList={MODEL_OPTIONS}
+          loading={modelsLoading}
+          optionList={modelOptions}
+          placeholder={t('请选择模型')}
           onChange={(value) => setForm((prev) => ({ ...prev, model: value }))}
         />
       </div>
@@ -269,7 +314,9 @@ const CommonControls = ({ form, setForm, showQuantity = true }) => {
           className='w-full'
           value={form.aspectRatio}
           optionList={ASPECT_RATIO_OPTIONS}
-          onChange={(value) => setForm((prev) => ({ ...prev, aspectRatio: value }))}
+          onChange={(value) =>
+            setForm((prev) => ({ ...prev, aspectRatio: value }))
+          }
         />
       </div>
       <div>
@@ -277,7 +324,10 @@ const CommonControls = ({ form, setForm, showQuantity = true }) => {
           {t('生成质量')}
         </div>
         <OptionButtons
-          options={QUALITY_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
+          options={QUALITY_OPTIONS.map((option) => ({
+            ...option,
+            label: t(option.label),
+          }))}
           value={form.quality}
           onChange={(quality) => setForm((prev) => ({ ...prev, quality }))}
         />
@@ -297,14 +347,18 @@ const CommonControls = ({ form, setForm, showQuantity = true }) => {
           <div>
             <div className='mb-2 flex items-center justify-between font-semibold text-[var(--semi-color-text-0)]'>
               <span>{t('数量')}</span>
-              <span className='text-[var(--semi-color-primary)]'>{form.quantity}</span>
+              <span className='text-[var(--semi-color-primary)]'>
+                {form.quantity}
+              </span>
             </div>
             <Slider
               min={1}
               max={4}
               step={1}
               value={form.quantity}
-              onChange={(quantity) => setForm((prev) => ({ ...prev, quantity }))}
+              onChange={(quantity) =>
+                setForm((prev) => ({ ...prev, quantity }))
+              }
             />
           </div>
         )}
@@ -337,7 +391,10 @@ const TokenSelect = ({ tokens, form, setForm }) => {
       />
       <TokenStatus token={selectedToken} />
       {tokens.tokenOptions.length === 0 && !tokens.loading && (
-        <Link className='mt-2 inline-block text-sm text-[var(--semi-color-primary)]' to='/console/token'>
+        <Link
+          className='mt-2 inline-block text-sm text-[var(--semi-color-primary)]'
+          to='/console/token'
+        >
           {t('前往令牌管理新建令牌')}
         </Link>
       )}
@@ -362,7 +419,10 @@ const LoadingPreview = ({ prompt, onCancel }) => {
       <div className='flex items-start justify-between gap-4'>
         <div className='flex min-w-0 items-center gap-2 text-[var(--semi-color-text-1)]'>
           <Spin size='small' />
-          <Typography.Text ellipsis={{ showTooltip: true }} className='!max-w-[420px]'>
+          <Typography.Text
+            ellipsis={{ showTooltip: true }}
+            className='!max-w-[420px]'
+          >
             {prompt || t('创作中，请稍候')}
           </Typography.Text>
         </div>
@@ -451,7 +511,14 @@ const PreviewPanel = ({ loading, result, prompt, onCancel }) => {
   );
 };
 
-const GeneratePanel = ({ form, setForm, tokens, onSubmit, loading }) => {
+const GeneratePanel = ({
+  form,
+  setForm,
+  tokens,
+  workshopConfig,
+  onSubmit,
+  loading,
+}) => {
   const { t } = useTranslation();
 
   return (
@@ -469,8 +536,19 @@ const GeneratePanel = ({ form, setForm, tokens, onSubmit, loading }) => {
             onChange={(prompt) => setForm((prev) => ({ ...prev, prompt }))}
           />
         </div>
-        <CommonControls form={form} setForm={setForm} />
-        <Button type='primary' size='large' loading={loading} onClick={onSubmit}>
+        <CommonControls
+          form={form}
+          setForm={setForm}
+          modelOptions={workshopConfig.modelOptions}
+          modelsLoading={workshopConfig.loading}
+        />
+        <Button
+          type='primary'
+          size='large'
+          loading={loading}
+          disabled={workshopConfig.loading || !form.model}
+          onClick={onSubmit}
+        >
           {t('开始生成')}
         </Button>
       </div>
@@ -478,7 +556,14 @@ const GeneratePanel = ({ form, setForm, tokens, onSubmit, loading }) => {
   );
 };
 
-const EditPanel = ({ form, setForm, tokens, onSubmit, loading }) => {
+const EditPanel = ({
+  form,
+  setForm,
+  tokens,
+  workshopConfig,
+  onSubmit,
+  loading,
+}) => {
   const { t } = useTranslation();
 
   const handleReferenceImages = (files) => {
@@ -521,8 +606,20 @@ const EditPanel = ({ form, setForm, tokens, onSubmit, loading }) => {
             onChange={(prompt) => setForm((prev) => ({ ...prev, prompt }))}
           />
         </div>
-        <CommonControls form={form} setForm={setForm} showQuantity={false} />
-        <Button type='primary' size='large' loading={loading} onClick={onSubmit}>
+        <CommonControls
+          form={form}
+          setForm={setForm}
+          modelOptions={workshopConfig.modelOptions}
+          modelsLoading={workshopConfig.loading}
+          showQuantity={false}
+        />
+        <Button
+          type='primary'
+          size='large'
+          loading={loading}
+          disabled={workshopConfig.loading || !form.model}
+          onClick={onSubmit}
+        >
           {t('开始编辑')}
         </Button>
       </div>
@@ -580,7 +677,11 @@ const HistoryPanel = ({ history, loaded, onSelect, onRemove, onClear }) => {
             key={item.id}
             className='overflow-hidden rounded-xl bg-[var(--semi-color-fill-0)]'
           >
-            <button type='button' className='block w-full' onClick={() => onSelect(item)}>
+            <button
+              type='button'
+              className='block w-full'
+              onClick={() => onSelect(item)}
+            >
               <img
                 src={item.outputs[0]}
                 alt={item.prompt}
@@ -625,6 +726,7 @@ const HistoryPanel = ({ history, loaded, onSelect, onRemove, onClear }) => {
 export default function InspirationWorkshopPage() {
   const { t } = useTranslation();
   const tokens = useInspirationTokens();
+  const workshopConfig = useInspirationWorkshopConfig();
   const historyState = useInspirationHistory();
   const [activeTab, setActiveTab] = useState('generate');
   const [generateForm, setGenerateForm] = useState(defaultGenerateForm);
@@ -634,6 +736,31 @@ export default function InspirationWorkshopPage() {
   const [pendingPrompt, setPendingPrompt] = useState('');
   const abortControllerRef = useRef(null);
 
+  useEffect(() => {
+    if (workshopConfig.loading || !workshopConfig.defaultImageModel) {
+      return;
+    }
+    const applyDefaultModel = (currentForm) => {
+      if (
+        workshopConfig.modelOptions.some(
+          (option) => option.value === currentForm.model,
+        )
+      ) {
+        return currentForm;
+      }
+      return {
+        ...currentForm,
+        model: workshopConfig.defaultImageModel,
+      };
+    };
+    setGenerateForm(applyDefaultModel);
+    setEditForm(applyDefaultModel);
+  }, [
+    workshopConfig.defaultImageModel,
+    workshopConfig.loading,
+    workshopConfig.modelOptions,
+  ]);
+
   const cancelPending = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -642,7 +769,8 @@ export default function InspirationWorkshopPage() {
   };
 
   const selectedToken = useMemo(() => {
-    const tokenId = activeTab === 'edit' ? editForm.tokenId : generateForm.tokenId;
+    const tokenId =
+      activeTab === 'edit' ? editForm.tokenId : generateForm.tokenId;
     return tokens.getToken(tokenId);
   }, [activeTab, editForm.tokenId, generateForm.tokenId, tokens]);
 
@@ -654,6 +782,10 @@ export default function InspirationWorkshopPage() {
     const token = tokens.getToken(form.tokenId);
     if (!token || token.status !== 1) {
       Toast.warning(t('当前令牌不可用'));
+      return false;
+    }
+    if (!form.model) {
+      Toast.warning(t('请选择模型'));
       return false;
     }
     if (!form.prompt.trim()) {
@@ -777,6 +909,7 @@ export default function InspirationWorkshopPage() {
                 form={generateForm}
                 setForm={setGenerateForm}
                 tokens={tokens}
+                workshopConfig={workshopConfig}
                 onSubmit={handleGenerate}
                 loading={loading}
               />
@@ -785,6 +918,7 @@ export default function InspirationWorkshopPage() {
                 form={editForm}
                 setForm={setEditForm}
                 tokens={tokens}
+                workshopConfig={workshopConfig}
                 onSubmit={handleEdit}
                 loading={loading}
               />

@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +50,7 @@ const routerMap = {
   deployment: '/console/deployment',
   claudeCode: '/console/install/claude-code',
   codex: '/console/install/codex',
+  gemini: '/console/install/gemini',
   tutorial: '/console/tutorial',
   personal: '/console/personal',
   inspirationWorkshop: '/console/inspiration-workshop',
@@ -41,6 +60,7 @@ const routerMap = {
 const routePrefixes = {
   claudeCode: '/console/install/claude-code/',
   codex: '/console/install/codex/',
+  gemini: '/console/install/gemini/',
 };
 
 const SiderBar = ({ onNavigate = () => {} }) => {
@@ -108,6 +128,11 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         text: t('Codex安装'),
         itemKey: 'codex',
         to: '/install/codex',
+      },
+      {
+        text: t('Gemini安装'),
+        itemKey: 'gemini',
+        to: '/install/gemini',
       },
       {
         text: t('使用教程'),
@@ -205,10 +230,10 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         className: isAdmin() ? '' : 'tableHiddle',
       },
       {
-        text: t('系统设置'),
+        text: isRoot() ? t('系统设置') : t('官网设置'),
         itemKey: 'setting',
         to: '/setting',
-        className: isRoot() ? '' : 'tableHiddle',
+        className: isAdmin() ? '' : 'tableHiddle',
       },
     ];
 

@@ -1,20 +1,46 @@
-import React, { useEffect, useMemo, useState } from 'react';
+/*
+Copyright (C) 2025 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { Modal, Toast } from '@douyinfe/semi-ui';
 import {
+  AppWindow,
   ChevronDown,
   ChevronUp,
   Laptop,
   Monitor,
 } from 'lucide-react';
-import { Claude, OpenAI } from '../../helpers/lobeIcons';
+import { Claude, Gemini, OpenAI } from '../../helpers/lobeIcons';
 import { copy } from '../../helpers/utils';
 import MarkdownRenderer from '../common/markdown/MarkdownRenderer';
 import { INSTALL_GUIDES } from './installGuideData';
+import { StatusContext } from '../../context/Status';
 
 const PRODUCT_ICONS = {
   'claude-code': Claude.Color,
   codex: OpenAI,
+  gemini: Gemini.Color,
+};
+
+const PLATFORM_ICONS = {
+  windows: Monitor,
+  desktop: AppWindow,
 };
 
 const renderRichText = (segments) =>
@@ -76,24 +102,38 @@ const renderBlock = (block, key) => {
 
   if (block.type === 'image') {
     return (
-      <img
-        key={key}
-        alt={block.alt}
-        className='console-docs__image'
-        loading='lazy'
-        src={block.src}
-      />
+      <figure key={key} className='console-docs__image-figure'>
+        <img
+          alt={block.alt}
+          className='console-docs__image'
+          loading='lazy'
+          src={block.src}
+        />
+        {block.caption ? (
+          <figcaption className='console-docs__image-caption'>
+            {block.caption}
+          </figcaption>
+        ) : null}
+      </figure>
     );
   }
 
   if (block.type === 'code') {
-    return <CopyableCodeBlock key={key} code={block.code} language={block.language} />;
+    return (
+      <CopyableCodeBlock
+        key={key}
+        code={block.code}
+        language={block.language}
+      />
+    );
   }
 
   if (block.type === 'note') {
     return (
       <div key={key} className='console-docs__note'>
-        {block.title ? <p className='console-docs__note-title'>{block.title}</p> : null}
+        {block.title ? (
+          <p className='console-docs__note-title'>{block.title}</p>
+        ) : null}
         <ul className='console-docs__note-list'>
           {block.items.map((item) => (
             <li key={item}>{item}</li>
@@ -132,7 +172,12 @@ const renderBlock = (block, key) => {
   );
 };
 
-const SectionCard = ({ section, children, action = null, tone = 'default' }) => (
+const SectionCard = ({
+  section,
+  children,
+  action = null,
+  tone = 'default',
+}) => (
   <section
     className={[
       'console-docs__section-card',
@@ -152,7 +197,11 @@ const SectionCard = ({ section, children, action = null, tone = 'default' }) => 
 );
 
 const SupportButton = ({ supportContact, onClick }) => (
-  <button className='console-docs__support-button' onClick={onClick} type='button'>
+  <button
+    className='console-docs__support-button'
+    onClick={onClick}
+    type='button'
+  >
     <img
       alt='手指'
       className='console-docs__support-finger'
@@ -218,7 +267,10 @@ const StepsSection = ({ section, onSupportClick }) => (
   >
     <div className='console-docs__step-list'>
       {section.steps.map((step, index) => (
-        <article key={`${section.id}-${index}`} className='console-docs__step-card'>
+        <article
+          key={`${section.id}-${index}`}
+          className='console-docs__step-card'
+        >
           <div className='console-docs__step-index'>{index + 1}</div>
           <div className='console-docs__step-content'>
             <h3 className='console-docs__step-title'>{step.title}</h3>
@@ -272,10 +324,16 @@ const FaqSection = ({ section }) => (
 const DefaultSection = ({ section }) => (
   <SectionCard
     section={section}
-    tone={section.type === 'callout' && section.tone === 'success' ? 'success' : 'default'}
+    tone={
+      section.type === 'callout' && section.tone === 'success'
+        ? 'success'
+        : 'default'
+    }
   >
     <div className='console-docs__section-stack'>
-      {section.blocks.map((block, index) => renderBlock(block, `${section.id}-${index}`))}
+      {section.blocks.map((block, index) =>
+        renderBlock(block, `${section.id}-${index}`),
+      )}
     </div>
   </SectionCard>
 );
@@ -284,7 +342,7 @@ const PlatformTabs = ({ activePlatformId, guide }) => (
   <div className='console-docs__platform-tabs'>
     {guide.platforms.map((platform) => {
       const isActive = platform.id === activePlatformId;
-      const Icon = platform.id === 'windows' ? Monitor : Laptop;
+      const Icon = PLATFORM_ICONS[platform.id] || Laptop;
 
       return (
         <Link
@@ -327,6 +385,31 @@ const SubTabs = ({ subTabs, activeSubTab, onSubTabChange }) => (
   </div>
 );
 
+const HeroQuickActions = ({ actions = [] }) => {
+  if (!actions.length) {
+    return null;
+  }
+
+  return (
+    <div className='console-docs__hero-actions'>
+      {actions.map((action) => (
+        <Link
+          key={action.to}
+          className={[
+            'console-docs__hero-action',
+            action.primary ? 'console-docs__hero-action--primary' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          to={action.to}
+        >
+          {action.label}
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 const MarkdownInstallContent = ({ platform }) => (
   <div className='console-docs__content'>
     <section className='console-docs__section-card console-docs__section-card--markdown'>
@@ -348,7 +431,11 @@ const MarkdownInstallContent = ({ platform }) => (
         <div className='console-docs__section-body'>
           <div className='console-docs__section-stack'>
             {platform.codeBlocks.map((block) => (
-              <CopyableCodeBlock key={block.id} code={block.code} language={block.language} />
+              <CopyableCodeBlock
+                key={block.id}
+                code={block.code}
+                language={block.language}
+              />
             ))}
           </div>
         </div>
@@ -371,13 +458,26 @@ const InstallHero = ({ guide, platform }) => {
         </div>
         <h1 className='console-docs__title'>{platform.title}</h1>
         <p className='console-docs__description'>{platform.description}</p>
+        {guide.highlights?.length ? (
+          <div className='console-docs__hero-highlights'>
+            {guide.highlights.map((highlight) => (
+              <span key={highlight}>{highlight}</span>
+            ))}
+          </div>
+        ) : null}
+        <HeroQuickActions actions={guide.quickActions} />
       </div>
       <PlatformTabs activePlatformId={platform.id} guide={guide} />
     </header>
   );
 };
 
-const InstallSections = ({ onSupportClick, openAccordions, platform, toggleAccordion }) => (
+const InstallSections = ({
+  onSupportClick,
+  openAccordions,
+  platform,
+  toggleAccordion,
+}) => (
   <div className='console-docs__content'>
     {platform.sections.map((section) => {
       if (section.type === 'accordion') {
@@ -393,7 +493,11 @@ const InstallSections = ({ onSupportClick, openAccordions, platform, toggleAccor
 
       if (section.type === 'steps') {
         return (
-          <StepsSection key={section.id} onSupportClick={onSupportClick} section={section} />
+          <StepsSection
+            key={section.id}
+            onSupportClick={onSupportClick}
+            section={section}
+          />
         );
       }
 
@@ -408,8 +512,12 @@ const InstallSections = ({ onSupportClick, openAccordions, platform, toggleAccor
 
 const ConsoleInstallPage = ({ productId }) => {
   const { platform: platformId } = useParams();
+  const [statusState] = useContext(StatusContext);
   const guide = INSTALL_GUIDES[productId];
-  const fallbackPlatformId = guide?.platforms?.find((item) => item.id === 'windows')?.id || guide?.platforms?.[0]?.id || 'windows';
+  const fallbackPlatformId =
+    guide?.platforms?.find((item) => item.id === 'windows')?.id ||
+    guide?.platforms?.[0]?.id ||
+    'windows';
   const platform = useMemo(
     () => guide?.platforms?.find((item) => item.id === platformId) || null,
     [guide, platformId],
@@ -438,7 +546,9 @@ const ConsoleInstallPage = ({ productId }) => {
     const sections = activeSections;
     const nextOpenAccordions = new Set(
       sections
-        .filter((section) => section.type === 'accordion' && section.defaultOpen)
+        .filter(
+          (section) => section.type === 'accordion' && section.defaultOpen,
+        )
         .map((section) => section.id),
     );
 
@@ -449,12 +559,25 @@ const ConsoleInstallPage = ({ productId }) => {
     return null;
   }
 
+  if (productId === 'codex' && platformId === 'ide') {
+    return <Navigate replace to='/console/install/codex/desktop' />;
+  }
+
   if (!platform) {
     return <Navigate replace to={`${guide.basePath}/${fallbackPlatformId}`} />;
   }
 
   const supportContact =
-    activeSections?.find((section) => section.supportContact)?.supportContact || null;
+    activeSections?.find((section) => section.supportContact)?.supportContact ||
+    null;
+  const configuredSupportQRCode =
+    statusState?.status?.home_notice?.qr_code_image_url?.trim() || '';
+  const resolvedSupportContact = supportContact
+    ? {
+        ...supportContact,
+        qrCodeImage: configuredSupportQRCode || supportContact.qrCodeImage,
+      }
+    : null;
 
   const isMarkdownContent = platform.contentType === 'markdown';
 
@@ -492,22 +615,24 @@ const ConsoleInstallPage = ({ productId }) => {
           />
         )}
       </div>
-      {supportContact ? (
+      {resolvedSupportContact ? (
         <Modal
           centered
           footer={null}
           onCancel={() => setSupportVisible(false)}
-          title={supportContact.title}
+          title={resolvedSupportContact.title}
           visible={supportVisible}
         >
           <div className='console-docs__support-modal'>
             <img
-              alt={supportContact.qrCodeAlt}
+              alt={resolvedSupportContact.qrCodeAlt}
               className='console-docs__support-qr'
               loading='lazy'
-              src={supportContact.qrCodeImage}
+              src={resolvedSupportContact.qrCodeImage}
             />
-            <p className='console-docs__support-copy'>{supportContact.description}</p>
+            <p className='console-docs__support-copy'>
+              {resolvedSupportContact.description}
+            </p>
           </div>
         </Modal>
       ) : null}
