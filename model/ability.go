@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 
 	"github.com/samber/lo"
 	"gorm.io/gorm"
@@ -38,11 +39,21 @@ func GetAllEnableAbilityWithChannels() ([]AbilityWithChannel, error) {
 	return abilities, err
 }
 
+func GetImageMaxGroups() ([]string, error) {
+	var groups []string
+	groupColumn := "abilities." + commonGroupCol
+	err := DB.Table("abilities").Joins("JOIN channels ON channels.id = abilities.channel_id").
+		Where("abilities.model = ? AND abilities.enabled = ? AND channels.type = ? AND channels.status = ?",
+			constant.ImageMaxModel, true, constant.ChannelTypeVolcEngine, common.ChannelStatusEnabled).
+		Distinct(groupColumn).Pluck(groupColumn, &groups).Error
+	return groups, err
+}
+
 func GetGroupEnabledModels(group string) []string {
 	var models []string
 	// Find distinct models
 	DB.Table("abilities").Where(commonGroupCol+" = ? and enabled = ?", group, true).Distinct("model").Pluck("model", &models)
-	return models
+	return lo.Filter(models, func(name string, _ int) bool { return !constant.IsImageMaxModel(name) })
 }
 
 func GetEnabledModels() []string {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
 
 	"github.com/gin-gonic/gin"
@@ -43,7 +44,7 @@ func normalizeInspirationWorkshopSettings(
 	seen := make(map[string]struct{}, len(settings.ImageModels))
 	for _, rawModel := range settings.ImageModels {
 		modelID := strings.TrimSpace(rawModel)
-		if modelID == "" {
+		if modelID == "" || constant.IsImageMaxModel(modelID) {
 			continue
 		}
 		if len(modelID) > maxInspirationWorkshopModelIDLength {

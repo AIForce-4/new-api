@@ -41,9 +41,11 @@ import ConsolePageShell from '../layout/ConsolePageShell';
 import useInspirationTokens from '../../hooks/inspiration-workshop/useInspirationTokens';
 import useInspirationHistory from '../../hooks/inspiration-workshop/useInspirationHistory';
 import useInspirationWorkshopConfig from '../../hooks/inspiration-workshop/useInspirationWorkshopConfig';
+import { pickWorkshopModel } from '../../hooks/inspiration-workshop/workshopModelOptions';
 import {
   ASPECT_RATIO_OPTIONS,
   FORMAT_OPTIONS,
+  IMAGE_MAX_NAME,
   QUALITY_OPTIONS,
   buildDownloadFilename,
   buildImageEditFormData,
@@ -52,7 +54,37 @@ import {
   normalizeImageResponse,
   requestImageEdit,
   requestImageGeneration,
+  requestImageMax,
 } from '../../helpers/inspirationWorkshop';
+
+const IMAGE_MAX_SIZES = {
+  '1K': {
+    '1:1': '1024x1024', '4:3': '1152x864', '3:4': '864x1152',
+    '16:9': '1424x800', '9:16': '800x1424', '3:2': '1248x832',
+    '2:3': '832x1248', '21:9': '1568x672',
+  },
+  '1.5K': {
+    '1:1': '1536x1536', '4:3': '1792x1344', '3:4': '1344x1792',
+    '16:9': '2048x1152', '9:16': '1152x2048', '3:2': '1872x1248',
+    '2:3': '1248x1872', '21:9': '2352x1008',
+  },
+  '2K': {
+    '1:1': '2048x2048', '4:3': '2368x1776', '3:4': '1776x2368',
+    '16:9': '2816x1584', '9:16': '1584x2816', '3:2': '2496x1664',
+    '2:3': '1664x2496', '21:9': '3136x1344',
+  },
+  '4K': { '16:9': '3840x2160', '9:16': '2160x3840' },
+};
+
+const defaultImageMaxForm = {
+  mode: 'text',
+  prompt: '',
+  resolution: '2K',
+  aspectRatio: '16:9',
+  format: 'png',
+  background: 'auto',
+  files: [],
+};
 
 const defaultGenerateForm = {
   tokenId: undefined,
@@ -248,11 +280,12 @@ const SegmentedTabs = ({ activeTab, onChange }) => {
   const tabs = [
     { key: 'generate', label: t('生成') },
     { key: 'edit', label: t('编辑') },
+    { key: 'image-max', label: IMAGE_MAX_NAME },
     { key: 'history', label: t('历史') },
   ];
 
   return (
-    <div className='grid grid-cols-3 gap-1 rounded-xl border border-[var(--semi-color-border)] bg-[var(--semi-color-fill-0)] p-1'>
+    <div className='grid grid-cols-2 gap-1 rounded-xl border border-[var(--semi-color-border)] bg-[var(--semi-color-fill-0)] p-1 sm:grid-cols-4'>
       {tabs.map((tab) => (
         <button
           key={tab.key}
@@ -287,6 +320,7 @@ const CommonControls = ({
   setForm,
   modelOptions,
   modelsLoading,
+  modelsError,
   showQuantity = true,
 }) => {
   const { t } = useTranslation();
@@ -301,10 +335,16 @@ const CommonControls = ({
           className='w-full'
           value={form.model}
           loading={modelsLoading}
+          disabled={!form.tokenId || modelsLoading || modelOptions.length === 0}
           optionList={modelOptions}
-          placeholder={t('请选择模型')}
+          placeholder={form.tokenId ? t('请选择模型') : t('请先选择令牌')}
           onChange={(value) => setForm((prev) => ({ ...prev, model: value }))}
         />
+        {form.tokenId && !modelsLoading && modelOptions.length === 0 && (
+          <Typography.Text type='tertiary'>
+            {modelsError ? t('无法加载可用模型') : t('此令牌没有适用于当前模式的画坊模型')}
+          </Typography.Text>
+        )}
       </div>
       <div>
         <div className='mb-2 font-semibold text-[var(--semi-color-text-0)]'>
@@ -511,6 +551,95 @@ const PreviewPanel = ({ loading, result, prompt, onCancel }) => {
   );
 };
 
+const ImageMaxPanel = ({ form, setForm, onSubmit, loading }) => {
+  const { t } = useTranslation();
+  const sizes = IMAGE_MAX_SIZES[form.resolution];
+  const ratio = sizes[form.aspectRatio] ? form.aspectRatio : '16:9';
+  const change = (key, value) => setForm((prev) => ({
+    ...prev,
+    [key]: value,
+    ...(key === 'background' && value === 'transparent' ? { format: 'png' } : {}),
+  }));
+  const resolutionOptions = Object.keys(IMAGE_MAX_SIZES).map((value) => ({
+    label: value,
+    value,
+  }));
+  const ratioOptions = Object.entries(sizes).map(([value, size]) => ({
+    label: `${value} · ${size.replace('x', '×')}`,
+    value,
+  }));
+  const modeField = [t('创作方式'), 'mode', form.mode, [
+    { label: t('文生图'), value: 'text' },
+    { label: t('图生图'), value: 'image' },
+  ]];
+  const fields = [
+    [t('分辨率'), 'resolution', form.resolution, resolutionOptions],
+    [t('画面比例'), 'aspectRatio', ratio, ratioOptions],
+    [t('输出格式'), 'format', form.format, [
+      { label: 'PNG', value: 'png' },
+      { label: 'JPEG', value: 'jpeg', disabled: form.background === 'transparent' },
+    ]],
+    [t('背景'), 'background', form.background, [
+      { label: t('自动'), value: 'auto' },
+      { label: t('不透明'), value: 'opaque' },
+      { label: t('透明背景'), value: 'transparent' },
+    ]],
+  ];
+
+  const renderField = ([label, key, value, options]) => (
+    <div key={key}>
+      <div className='mb-2 font-semibold'>{label}</div>
+      <Select
+        aria-label={label}
+        className='w-full'
+        value={value}
+        optionList={options}
+        onChange={(next) => change(key, next)}
+      />
+    </div>
+  );
+
+  return (
+    <Card className='rounded-2xl'>
+      <div className='flex flex-col gap-4'>
+        <Typography.Title heading={5}>{IMAGE_MAX_NAME}</Typography.Title>
+        {renderField(modeField)}
+        <div>
+          <div className='mb-2 font-semibold'>{t('提示词')}</div>
+          <TextArea
+            aria-label={t('提示词')}
+            placeholder={t('请输入提示词')}
+            value={form.prompt}
+            onChange={(value) => change('prompt', value)}
+            autosize={{ minRows: 3, maxRows: 8 }}
+          />
+        </div>
+        {fields.map(renderField)}
+        {form.mode === 'image' && (
+          <FilePicker
+            label={t('参考图')}
+            hint={t('上传一张 PNG、JPEG 或 WebP（最多 12 MB）')}
+            accept='image/png,image/jpeg,image/webp'
+            files={form.files}
+            onChange={(files) => change('files', files.slice(0, 1))}
+          />
+        )}
+        <Typography.Text type='tertiary'>
+          {t('每次生成一张，仅扣钱包余额')}
+        </Typography.Text>
+        <Button
+          type='primary'
+          theme='solid'
+          loading={loading}
+          onClick={() => onSubmit(sizes[ratio])}
+        >
+          {t('开始生成')}
+        </Button>
+      </div>
+    </Card>
+  );
+};
+
 const GeneratePanel = ({
   form,
   setForm,
@@ -541,6 +670,7 @@ const GeneratePanel = ({
           setForm={setForm}
           modelOptions={workshopConfig.modelOptions}
           modelsLoading={workshopConfig.loading}
+          modelsError={workshopConfig.modelsError}
         />
         <Button
           type='primary'
@@ -611,6 +741,7 @@ const EditPanel = ({
           setForm={setForm}
           modelOptions={workshopConfig.modelOptions}
           modelsLoading={workshopConfig.loading}
+          modelsError={workshopConfig.modelsError}
           showQuantity={false}
         />
         <Button
@@ -691,7 +822,9 @@ const HistoryPanel = ({ history, loaded, onSelect, onRemove, onClear }) => {
             <div className='p-4'>
               <div className='mb-2 flex items-center justify-between'>
                 <Tag color={item.type === 'edit' ? 'green' : 'blue'}>
-                  {item.type === 'edit' ? t('编辑') : t('生成')}
+                  {item.request?.model === IMAGE_MAX_NAME
+                    ? `${IMAGE_MAX_NAME} · ${item.type === 'edit' ? t('图生图') : t('文生图')}`
+                    : item.type === 'edit' ? t('编辑') : t('生成')}
                 </Tag>
                 <div className='flex items-center gap-1'>
                   <Button
@@ -729,37 +862,30 @@ export default function InspirationWorkshopPage() {
   const workshopConfig = useInspirationWorkshopConfig();
   const historyState = useInspirationHistory();
   const [activeTab, setActiveTab] = useState('generate');
-  const [generateForm, setGenerateForm] = useState(defaultGenerateForm);
-  const [editForm, setEditForm] = useState(defaultEditForm);
+  const [generateDraft, setGenerateForm] = useState(defaultGenerateForm);
+  const [editDraft, setEditForm] = useState(defaultEditForm);
+  const [imageMaxForm, setImageMaxForm] = useState(defaultImageMaxForm);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [pendingPrompt, setPendingPrompt] = useState('');
   const abortControllerRef = useRef(null);
 
-  useEffect(() => {
-    if (workshopConfig.loading || !workshopConfig.defaultImageModel) {
-      return;
-    }
-    const applyDefaultModel = (currentForm) => {
-      if (
-        workshopConfig.modelOptions.some(
-          (option) => option.value === currentForm.model,
-        )
-      ) {
-        return currentForm;
-      }
-      return {
-        ...currentForm,
-        model: workshopConfig.defaultImageModel,
-      };
-    };
-    setGenerateForm(applyDefaultModel);
-    setEditForm(applyDefaultModel);
-  }, [
-    workshopConfig.defaultImageModel,
-    workshopConfig.loading,
-    workshopConfig.modelOptions,
-  ]);
+  const generateModels = workshopConfig.modelsForToken(
+    tokens.getToken(generateDraft.tokenId),
+    'generate',
+  );
+  const editModels = workshopConfig.modelsForToken(
+    tokens.getToken(editDraft.tokenId),
+    'edit',
+  );
+  const generateForm = {
+    ...generateDraft,
+    model: pickWorkshopModel(generateModels, generateDraft.model, workshopConfig.defaultImageModel),
+  };
+  const editForm = {
+    ...editDraft,
+    model: pickWorkshopModel(editModels, editDraft.model, workshopConfig.defaultImageModel),
+  };
 
   const cancelPending = () => {
     if (abortControllerRef.current) {
@@ -802,7 +928,7 @@ export default function InspirationWorkshopPage() {
       createdAt: new Date().toISOString(),
       prompt: form.prompt.trim(),
       tokenId: form.tokenId,
-      tokenName: selectedToken?.name,
+      tokenName: form.tokenId ? selectedToken?.name : undefined,
       request: {
         model: form.model,
         aspectRatio: form.aspectRatio,
@@ -816,78 +942,81 @@ export default function InspirationWorkshopPage() {
     historyState.addHistoryItem(item);
   };
 
-  const handleGenerate = async () => {
-    if (!validateCommon(generateForm)) return;
-
+  const runImageRequest = async (type, form, send) => {
+    if (abortControllerRef.current) return;
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    setPendingPrompt(generateForm.prompt.trim());
+    setPendingPrompt(form.prompt.trim());
     setLoading(true);
     try {
-      const tokenKey = await tokens.resolveTokenKey(generateForm.tokenId);
-      const payload = buildImageGenerationPayload(generateForm);
-      const response = await requestImageGeneration({
-        tokenKey,
-        payload,
-        signal: controller.signal,
-      });
-      const normalized = normalizeImageResponse(response, generateForm.format);
+      const response = await send(controller.signal);
+      const normalized = normalizeImageResponse(response, form.format);
       if (normalized.images.length === 0) {
         throw new Error(t('未返回图片'));
       }
-      saveResult('generate', generateForm, normalized);
-      Toast.success(t('生成成功'));
+      saveResult(type, form, normalized);
+      Toast.success(type === 'edit' ? t('编辑成功') : t('生成成功'));
     } catch (error) {
       if (error?.name === 'AbortError') {
         Toast.info(t('已取消'));
       } else {
-        Toast.error(error.message || t('图片生成失败'));
+        Toast.error(
+          error.message || (type === 'edit' ? t('图片编辑失败') : t('图片生成失败')),
+        );
       }
     } finally {
-      if (abortControllerRef.current === controller) {
+      if (!abortControllerRef.current || abortControllerRef.current === controller) {
         abortControllerRef.current = null;
+        setLoading(false);
       }
-      setLoading(false);
     }
   };
 
-  const handleEdit = async () => {
+  const handleGenerate = () => {
+    if (!validateCommon(generateForm)) return;
+    return runImageRequest('generate', generateForm, async (signal) =>
+      requestImageGeneration({
+        tokenKey: await tokens.resolveTokenKey(generateForm.tokenId),
+        payload: buildImageGenerationPayload(generateForm),
+        signal,
+      }),
+    );
+  };
+
+  const handleEdit = () => {
     if (!validateCommon(editForm)) return;
-    if (editForm.referenceImages.length === 0) {
+    if (!editForm.referenceImages.length) {
       Toast.warning(t('请至少上传一张参考图'));
       return;
     }
+    return runImageRequest('edit', editForm, async (signal) =>
+      requestImageEdit({
+        tokenKey: await tokens.resolveTokenKey(editForm.tokenId),
+        formData: buildImageEditFormData(editForm),
+        signal,
+      }),
+    );
+  };
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    setPendingPrompt(editForm.prompt.trim());
-    setLoading(true);
-    try {
-      const tokenKey = await tokens.resolveTokenKey(editForm.tokenId);
-      const formData = buildImageEditFormData(editForm);
-      const response = await requestImageEdit({
-        tokenKey,
-        formData,
-        signal: controller.signal,
-      });
-      const normalized = normalizeImageResponse(response, editForm.format);
-      if (normalized.images.length === 0) {
-        throw new Error(t('未返回图片'));
-      }
-      saveResult('edit', editForm, normalized);
-      Toast.success(t('编辑成功'));
-    } catch (error) {
-      if (error?.name === 'AbortError') {
-        Toast.info(t('已取消'));
-      } else {
-        Toast.error(error.message || t('图片编辑失败'));
-      }
-    } finally {
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null;
-      }
-      setLoading(false);
+  const handleImageMax = (size) => {
+    const form = imageMaxForm;
+    if (!form.prompt.trim()) {
+      Toast.warning(t('请输入提示词'));
+      return;
     }
+    if (form.mode === 'image' && !form.files.length) {
+      Toast.warning(t('请至少上传一张参考图'));
+      return;
+    }
+    if (form.mode === 'image' && form.files[0].size > 12 * 1024 * 1024) {
+      Toast.warning(t('参考图不能超过 12 MB'));
+      return;
+    }
+    return runImageRequest(
+      form.mode === 'image' ? 'edit' : 'generate',
+      { ...form, model: IMAGE_MAX_NAME, aspectRatio: size, quantity: 1 },
+      (signal) => requestImageMax({ form, size, signal }),
+    );
   };
 
   return (
@@ -909,8 +1038,15 @@ export default function InspirationWorkshopPage() {
                 form={generateForm}
                 setForm={setGenerateForm}
                 tokens={tokens}
-                workshopConfig={workshopConfig}
+                workshopConfig={{ ...workshopConfig, modelOptions: generateModels }}
                 onSubmit={handleGenerate}
+                loading={loading}
+              />
+            ) : activeTab === 'image-max' ? (
+              <ImageMaxPanel
+                form={imageMaxForm}
+                setForm={setImageMaxForm}
+                onSubmit={handleImageMax}
                 loading={loading}
               />
             ) : (
@@ -918,7 +1054,7 @@ export default function InspirationWorkshopPage() {
                 form={editForm}
                 setForm={setEditForm}
                 tokens={tokens}
-                workshopConfig={workshopConfig}
+                workshopConfig={{ ...workshopConfig, modelOptions: editModels }}
                 onSubmit={handleEdit}
                 loading={loading}
               />

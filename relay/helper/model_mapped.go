@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
@@ -62,6 +63,9 @@ func ModelMappedHelper(c *gin.Context, info *common.RelayInfo, request dto.Reque
 			}
 		}
 		if info.IsModelMapped {
+			if constant.IsImageMaxModel(currentModel) {
+				return fmt.Errorf("目标模型未开放 API 调用")
+			}
 			info.UpstreamModelName = currentModel
 		}
 	}

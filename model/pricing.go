@@ -278,6 +278,9 @@ func updatePricing() {
 
 	pricingMap = make([]Pricing, 0)
 	for model, groups := range modelGroupsMap {
+		if constant.IsImageMaxModel(model) {
+			continue
+		}
 		pricing := Pricing{
 			ModelName:              model,
 			EnableGroup:            groups.Items(),

@@ -3,6 +3,8 @@ package constant
 import (
 	"net/http"
 	"strings"
+
+	"github.com/QuantumNous/new-api/constant"
 )
 
 const (
@@ -66,7 +68,7 @@ func Path2RelayMode(path string) int {
 		relayMode = RelayModeEmbeddings
 	} else if strings.HasPrefix(path, "/v1/moderations") {
 		relayMode = RelayModeModerations
-	} else if strings.HasPrefix(path, "/v1/images/generations") {
+	} else if path == constant.ImageMaxPath || strings.HasPrefix(path, "/v1/images/generations") {
 		relayMode = RelayModeImagesGenerations
 	} else if strings.HasPrefix(path, "/v1/images/edits") {
 		relayMode = RelayModeImagesEdits

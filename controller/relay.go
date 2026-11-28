@@ -67,6 +67,7 @@ func geminiRelayHandler(c *gin.Context, info *relaycommon.RelayInfo) *types.NewA
 func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 
 	requestId := c.GetString(common.RequestIdKey)
+	imageMax := c.FullPath() == constant.ImageMaxPath
 	//group := common.GetContextKeyString(c, constant.ContextKeyUsingGroup)
 	//originalModel := common.GetContextKeyString(c, constant.ContextKeyOriginalModel)
 
@@ -88,6 +89,17 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	defer func() {
 		if newAPIError != nil {
 			logger.LogError(c, fmt.Sprintf("relay error: %s", newAPIError.Error()))
+			if imageMax {
+				message := "生图Max暂时无法生成，请稍后再试"
+				switch newAPIError.GetErrorCode() {
+				case types.ErrorCodeInsufficientUserQuota:
+					message = "钱包余额不足"
+				case types.ErrorCodeAccessDenied:
+					message = "生图Max仅支持钱包余额，请检查扣费偏好"
+				}
+				imageMaxFailure(c, newAPIError.StatusCode, common.MessageWithRequestId(message, requestId))
+				return
+			}
 			newAPIError.SetMessage(common.MessageWithRequestId(newAPIError.Error(), requestId))
 			switch relayFormat {
 			case types.RelayFormatOpenAIRealtime:
@@ -155,6 +167,12 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		return
 	}
 
+	if imageMax && (relayInfo.TieredBillingSnapshot == nil || priceData.QuotaToPreConsume <= 0) {
+		newAPIError = types.NewErrorWithStatusCode(errors.New("生图Max需要配置有效的分档价格"),
+			types.ErrorCodeModelPriceError, http.StatusServiceUnavailable, types.ErrOptionWithSkipRetry())
+		return
+	}
+
 	// common.SetContextKey(c, constant.ContextKeyTokenCountMeta, meta)
 
 	if priceData.FreeModel {
@@ -173,7 +191,9 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 			if relayInfo.Billing != nil {
 				relayInfo.Billing.Refund(c)
 			}
-			service.ChargeViolationFeeIfNeeded(c, relayInfo, newAPIError)
+			if !imageMax {
+				service.ChargeViolationFeeIfNeeded(c, relayInfo, newAPIError)
+			}
 		}
 	}()
 
@@ -229,7 +249,7 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 
 		processChannelError(c, *types.NewChannelError(channel.Id, channel.Type, channel.Name, channel.ChannelInfo.IsMultiKey, common.GetContextKeyString(c, constant.ContextKeyChannelKey), channel.GetAutoBan()), newAPIError)
 
-		if !shouldRetry(c, newAPIError, common.RetryTimes-retryParam.GetRetry()) {
+		if imageMax || !shouldRetry(c, newAPIError, common.RetryTimes-retryParam.GetRetry()) {
 			break
 		}
 	}
@@ -389,7 +409,14 @@ func processChannelError(c *gin.Context, channelError types.ChannelError, err *t
 			startTime = time.Now()
 		}
 		useTimeSeconds := int(time.Since(startTime).Seconds())
-		model.RecordErrorLog(c, userId, channelId, modelName, tokenName, err.MaskSensitiveErrorWithStatusCode(), tokenId, useTimeSeconds, false, userGroup, other)
+		message := err.MaskSensitiveErrorWithStatusCode()
+		if c.FullPath() == constant.ImageMaxPath {
+			adminInfo["upstream_model_name"] = modelName
+			adminInfo["upstream_error"] = message
+			delete(other, "channel_name")
+			modelName, message = constant.ImageMaxName, "生图Max生成失败"
+		}
+		model.RecordErrorLog(c, userId, channelId, modelName, tokenName, message, tokenId, useTimeSeconds, false, userGroup, other)
 	}
 
 }

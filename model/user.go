@@ -936,6 +936,28 @@ func DecreaseUserQuota(id int, quota int) (err error) {
 	return decreaseUserQuota(id, quota)
 }
 
+var ErrInsufficientWalletQuota = errors.New("钱包余额不足")
+
+func ReserveWalletQuota(id, quota int) error {
+	if quota <= 0 {
+		return errors.New("预扣额度必须大于零")
+	}
+	result := DB.Model(&User{}).Where("id = ? AND quota >= ?", id, quota).
+		Update("quota", gorm.Expr("quota - ?", quota))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrInsufficientWalletQuota
+	}
+	gopool.Go(func() {
+		if err := cacheDecrUserQuota(id, int64(quota)); err != nil {
+			common.SysLog("failed to decrease user quota: " + err.Error())
+		}
+	})
+	return nil
+}
+
 func decreaseUserQuota(id int, quota int) (err error) {
 	err = DB.Model(&User{}).Where("id = ?", id).Update("quota", gorm.Expr("quota - ?", quota)).Error
 	if err != nil {

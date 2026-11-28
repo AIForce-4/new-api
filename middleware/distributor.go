@@ -36,6 +36,11 @@ func Distribute() func(c *gin.Context) {
 			abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgDistributorInvalidRequest, map[string]any{"Error": err.Error()}))
 			return
 		}
+		imageMax := c.FullPath() == constant.ImageMaxPath
+		if !imageMax && constant.IsImageMaxModel(strings.TrimSuffix(modelRequest.Model, ratio_setting.CompactModelSuffix)) {
+			abortWithOpenAiMessage(c, http.StatusNotFound, "模型不存在或未开放 API 调用", types.ErrorCodeModelNotFound)
+			return
+		}
 		if ok {
 			id, err := strconv.Atoi(channelId.(string))
 			if err != nil {
@@ -129,6 +134,10 @@ func Distribute() func(c *gin.Context) {
 						TokenGroup: usingGroup,
 						Retry:      common.GetPointer(0),
 					})
+					if imageMax && (err != nil || channel == nil) {
+						abortWithOpenAiMessage(c, http.StatusServiceUnavailable, "当前分组暂无可用的生图Max渠道", types.ErrorCodeModelNotFound)
+						return
+					}
 					if err != nil {
 						showGroup := usingGroup
 						if usingGroup == "auto" {

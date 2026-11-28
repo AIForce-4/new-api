@@ -444,6 +444,9 @@ func postConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage 
 	}
 
 	logModel := modelName
+	if ctx.FullPath() == constant.ImageMaxPath {
+		logModel = constant.ImageMaxName
+	}
 	if strings.HasPrefix(logModel, "gpt-4-gizmo") {
 		logModel = "gpt-4-gizmo-*"
 		extraContent = append(extraContent, fmt.Sprintf("模型 %s", modelName))
