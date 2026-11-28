@@ -37,7 +37,9 @@ export default function useInspirationWorkshopConfig() {
 
     const loadConfig = async () => {
       try {
-        const response = await API.get('/api/inspiration_workshop/config');
+        const response = await API.get('/api/inspiration_workshop/config', {
+          params: { _ts: Date.now() },
+        });
         const data = response.data?.data;
         const imageModels = Array.isArray(data?.image_models)
           ? data.image_models.filter(

@@ -90,7 +90,9 @@ const SiteSetting = () => {
   const loadSettings = async () => {
     setLoading(true);
     try {
-      const res = await API.get('/api/option/home_notice');
+      const res = await API.get('/api/option/home_notice', {
+        params: { _ts: Date.now() },
+      });
       const { success, message, data } = res.data;
       if (!success) {
         showError(message || t('加载官网设置失败'));
@@ -114,7 +116,9 @@ const SiteSetting = () => {
   useEffect(() => {
     const loadGroupPromoSettings = async () => {
       try {
-        const res = await API.get('/api/option/group_promo');
+        const res = await API.get('/api/option/group_promo', {
+          params: { _ts: Date.now() },
+        });
         const { success, data } = res.data;
         if (success && data) {
           setGroupPromoSettings({

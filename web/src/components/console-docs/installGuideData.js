@@ -327,7 +327,7 @@ const CLAUDE_DESKTOP_MACOS_SECTIONS = [
             { name: 'Gateway API key', value: '你在本站创建的 API Key' },
           ]),
           image(
-            '/console-docs/install/claude-app/macos/step-config-connection.png',
+            '/console-docs/install/claude-app/macos/step-config-connection-aif4.png',
             'macOS Claude 桌面 App 连接配置',
             '图 3：填写 Static API key、Gateway base URL 和 API Key，其余字段保持默认。',
           ),
@@ -460,7 +460,7 @@ const CLAUDE_DESKTOP_WINDOWS_SECTIONS = [
             { name: 'Gateway auth scheme', value: 'x-api-key' },
           ]),
           image(
-            '/console-docs/install/claude-app/windows/step-config-connection.png',
+            '/console-docs/install/claude-app/windows/step-config-connection-aif4.png',
             'Windows Claude 桌面 App 连接配置',
             '图 5：填写 Base URL 和 API Key，并将 Gateway auth scheme 选择为 x-api-key。',
           ),

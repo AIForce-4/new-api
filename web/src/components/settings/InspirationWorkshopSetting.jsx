@@ -72,7 +72,9 @@ const InspirationWorkshopSetting = () => {
   const loadSettings = async () => {
     setLoading(true);
     try {
-      const response = await API.get('/api/option/inspiration_workshop');
+      const response = await API.get('/api/option/inspiration_workshop', {
+        params: { _ts: Date.now() },
+      });
       const { success, message, data } = response.data;
       if (!success) {
         showError(message || t('加载灵感画坊设置失败'));

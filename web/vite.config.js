@@ -11,9 +11,7 @@ const trimTrailingSlash = (value) => value.replace(/\/+$/, '');
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '');
-  const serverUrl = trimTrailingSlash(
-    env.VITE_REACT_APP_SERVER_URL || '',
-  );
+  const serverUrl = trimTrailingSlash(env.VITE_REACT_APP_SERVER_URL || '');
   const proxyTarget = trimTrailingSlash(
     env.VITE_DEV_PROXY_TARGET || serverUrl || 'http://localhost:3000',
   );
@@ -57,7 +55,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       // 【关键修改 3】限制构建 worker 数量，防止并发过高撑爆内存
       worker: {
-        maxWorkers: 1, 
+        maxWorkers: 1,
       },
       rollupOptions: {
         // 【关键修改 4】忽略 lottie-web 的 eval 警告，防止构建器过度处理
@@ -91,6 +89,12 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
+          target: proxyTarget,
+          changeOrigin: true,
+          autoRewrite: true,
+          followRedirects: true,
+        },
+        '/v1': {
           target: proxyTarget,
           changeOrigin: true,
           autoRewrite: true,
